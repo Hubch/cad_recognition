@@ -1,0 +1,22 @@
+.aider*
+
+# Project-related files
+docs/*
+# Run logs
+backend/run_logs/*
+
+# Weird Docker setup related files
+backend/backend/*
+
+# Env vars
+frontend/.env.local
+frontend/node_modules
+.env
+
+# Mac files
+.DS_Store
+
+# Python env
+venv
+
+
