@@ -84,6 +84,23 @@ MOCK_RESULT = """
             font-family: monospace;
             font-size: 14px;
         }
+       /* 添加一些基本的样式 */
+        .responsive-image {
+            width: 100%;
+            max-width: 500px; /* 初始图片的最大宽度 */
+            cursor: pointer; /* 鼠标悬停时显示指针，表示可点击 */
+            transition: transform 0.3s ease; /* 平滑缩放效果 */
+        }
+        /* 放大图片的样式 */
+        .responsive-image.expanded {
+            transform: scale(3); /* 放大图片 */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(3);
+            cursor: grab;
+            z-index: 10;
+        }
 	</style>
 </head>
 <body>
@@ -91,20 +108,20 @@ MOCK_RESULT = """
     
 		<h3>元件识别结果</h3>
         <div class="iamge-container">
-    		<img class="image" src="/outputs/1715675001078.png" alt="Image 1">
-    		<img class="image" src="/outputs/1715675001078.png" alt="Image 2">
+    		<img class="responsive-image" src="/outputs/1715675001078.png" alt="Image 1">
+    		<img class="responsive-image" src="/outputs/1715675001078.png" alt="Image 2">
         </div>
       <div>
        
         <div class="iamge-container">
             <h3>OCR转换结果1</h3>
-    		<img class="image" src="/outputs/image.png">
+    		<img class="responsive-image" src="/outputs/image.png">
             <h4>文本内容</h4>
             <div type="text" class="input">
               减液界区闵组附近 综合 W-530 B-73 备及 IN 7307 50-SW-3001-A1X 186D-01140-004 40-FW-3021-A1A- FIRO SL FIRO 304 SL 31 SL ON2 HoNa 23 50-IA-3001-A1X-N X 80-PA-3001-A1A-N X 236 化 7 SL N1 至脱水机SPR-7501A/ 1309 PD-01140-007 去至絮凝剂进料泵吹 X 文 仅表伴热用 80 X 80-HWS-3001-A1A-H X X 232 SL SI < 23 X 7302布置在立管上，N1AF与N2AF之问距 310 X 仅表伴热用 又 X 氧化风机冷却月 氧化风机冷却月 氧化风机冷却用 浊度仪冷却月 T-1502/AT-7503 8 K-1501A K-1501B K-15010 X X 273 10-CWS-3001-A1A. X HoeNd < 200-LFW-3001-A1A- X 文 X 50-JFW-3004-A1A-1 # # N-VI4-800 731 11 T305 来自TICSA-730 227PD-01140-00 730 IXI 120 7302 303 PID.01 修改标 日期 至除小激冷塔r- X 领方式扩做至第三 中石化字药工程有限公司 隆温晴电 1B-A1 装置或单元（ 400. 5G-30014 00x2 设计阶段 专业名称 次 HE
             </div>
             <h3>OCR转换结果2</h3>
-    		<img class="image" src="/outputs/image.png">
+    		<img class="responsive-image" src="/outputs/image.png">
             <h4>文本内容</h4>
             <div type="text" class="input">
               减液界区闵组附近 综合 W-530 B-73 备及 IN 7307 50-SW-3001-A1X 186D-01140-004 40-FW-3021-A1A- FIRO SL FIRO 304 SL 31 SL ON2 HoNa 23 50-IA-3001-A1X-N X 80-PA-3001-A1A-N X 236 化 7 SL N1 至脱水机SPR-7501A/ 1309 PD-01140-007 去至絮凝剂进料泵吹 X 文 仅表伴热用 80 X 80-HWS-3001-A1A-H X X 232 SL SI < 23 X 7302布置在立管上，N1AF与N2AF之问距 310 X 仅表伴热用 又 X 氧化风机冷却月 氧化风机冷却月 氧化风机冷却用 浊度仪冷却月 T-1502/AT-7503 8 K-1501A K-1501B K-15010 X X 273 10-CWS-3001-A1A. X HoeNd < 200-LFW-3001-A1A- X 文 X 50-JFW-3004-A1A-1 # # N-VI4-800 731 11 T305 来自TICSA-730 227PD-01140-00 730 IXI 120 7302 303 PID.01 修改标 日期 至除小激冷塔r- X 领方式扩做至第三 中石化字药工程有限公司 隆温晴电 1B-A1 装置或单元（ 400. 5G-30014 00x2 设计阶段 专业名称 次 HE
@@ -122,10 +139,21 @@ MOCK_RESULT = """
       </pre>
 	</div>
   </div>
+      <script>
+    // 获取所有的图片
+    const images = document.querySelectorAll('.responsive-image');
+
+    // 为每张图片添加点击事件监听器
+    images.forEach(img => {
+        img.addEventListener('click', function() {
+            // 切换图片的类来放大或恢复
+            this.classList.toggle('expanded');
+        });
+    });
+</script>
 </body>
 </html>
 """
-
 
 
 APPLE_MOCK_CODE = """<html lang="en">

@@ -52,7 +52,7 @@ class ObjectDetect:
 @serve.deployment
 def converterRGB(base64_str:str):
     image_data = base64.b64decode(base64_str)
-    image = Image.open(BytesIO(image_data))
+    image = Image.open(BytesIO(image_data)).convert("RGB")
     return image
 
 @serve.deployment
