@@ -4,6 +4,7 @@ from openai.types.chat import ChatCompletionMessageParam, ChatCompletionContentP
 
 from prompts.imported_code_prompts import IMPORTED_CODE_SYSTEM_PROMPTS
 from prompts.screenshot_system_prompts import SYSTEM_PROMPTS
+from prompts.match_cad_prompts import CAD_MATCH_SYSTEM_PROMPTS
 from prompts.types import Stack
 
 
@@ -77,3 +78,47 @@ def assemble_prompt(
             "content": user_content,
         },
     ]
+
+
+
+
+JSON_USER_PROMPT = """
+Please correctly compare and analyse the entered information of the recognised pictures.
+"""
+
+def assemble_json_prompt(
+    detection_info: List[Union[str, None]],
+    stack: Stack,
+) -> List[ChatCompletionMessageParam]:
+    system_content = CAD_MATCH_SYSTEM_PROMPTS.get(stack, "Default System Prompt")
+    user_prompt = JSON_USER_PROMPT
+
+    user_content: List[ChatCompletionContentPartParam] = [
+        {
+            "type": "text",
+            "text": user_prompt,
+        },
+    ]
+
+    # Include detection_info as text parts in user_content
+    for info in detection_info:
+        if info:  # Make sure the info is not None or empty
+            user_content.append(
+                {
+                    "type": "text",
+                    "text": info,
+                }
+            )
+            
+    # Construct the final list of ChatCompletionMessageParam objects
+    return [
+        {
+            "role": "system",
+            "content": system_content,
+        },
+        {
+            "role": "user",
+            "content": user_content,
+        },
+    ]
+

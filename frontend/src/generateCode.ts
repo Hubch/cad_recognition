@@ -20,7 +20,7 @@ export function generateCode(
   onCancel: () => void,
   onComplete: () => void
 ) {
-  const wsUrl = `${WS_BACKEND_URL}/generate-code`;
+  const wsUrl = `${WS_BACKEND_URL}/recognition`;
   console.log("Connecting to backend @ ", wsUrl);
 
   const ws = new WebSocket(wsUrl);

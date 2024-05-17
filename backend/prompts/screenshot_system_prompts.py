@@ -182,4 +182,5 @@ SYSTEM_PROMPTS = SystemPrompts(
     ionic_tailwind=IONIC_TAILWIND_SYSTEM_PROMPT,
     vue_tailwind=VUE_TAILWIND_SYSTEM_PROMPT,
     svg=SVG_SYSTEM_PROMPT,
+    json="",
 )
