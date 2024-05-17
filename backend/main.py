@@ -6,7 +6,7 @@ load_dotenv()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import screenshot, generate_code, home, evals
+from routes import screenshot, generate_code, home, evals,recognition_match
 
 app = FastAPI(openapi_url=None, docs_url=None, redoc_url=None)
 
@@ -24,3 +24,4 @@ app.include_router(generate_code.router)
 app.include_router(screenshot.router)
 app.include_router(home.router)
 app.include_router(evals.router)
+app.include_router(recognition_match.router)

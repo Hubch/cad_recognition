@@ -33,6 +33,7 @@ Run model serve
 ```bash
 cd modelserve
 pip install -r requirements.txt
+ray start --head
 serve run ./config.yaml
 ```
 

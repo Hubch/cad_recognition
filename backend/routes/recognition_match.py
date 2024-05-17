@@ -141,6 +141,7 @@ async def recognition(websocket:WebSocket):
     for image in params["images"]:
         request = DetectRequest(image=image)
         detect_result = await modelserve(request)
+        print(f"detect_result: {detect_result}")
         detect_results.append(detect_result)
     
     # Assemble the prompt
@@ -239,7 +240,7 @@ class DetectRequest(BaseModel):
 
 
 async def modelserve(request: DetectRequest):
-    api_base_url = os.environ.get("MODEL_SERVE_URL", "http://localhost:8000")
+    api_base_url = os.environ.get("MODEL_SERVE_URL", "http://localhost:8000/caddetect")
     try:
         async with httpx.AsyncClient(timeout=60) as client:
             response = await client.post(
