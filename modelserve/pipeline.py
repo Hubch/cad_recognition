@@ -2,7 +2,7 @@ import onnxruntime
 from PIL import Image
 import numpy as np
 import logging
-import torch
+
 
 class YOLOv5ONNXPipeline:
     def __init__(self, onnx_model_path):
@@ -22,7 +22,8 @@ class YOLOv5ONNXPipeline:
         image_array = np.array(image).astype(np.float32)
         image_array /= 255.0  # 归一化
         image_array = np.expand_dims(image_array, axis=0)  # 增加批次维度
-        self.logger.info(f"Image array shape: {image_array.shape}")
+        print(f"Image array shape: {image_array.shape}")
+        image_array = image_array.transpose((0, 3, 1, 2))
         return image_array
 
     def postprocess_results(self, results):
@@ -62,8 +63,10 @@ class YOLOv8SegmentationPipeline:
         image_array = np.array(image).astype(np.float32)
         image_array /= 255.0  # 归一化
         image_array = np.expand_dims(image_array, axis=0)  # 增加批次维度
-        
-        return image_array
+        # 使用 transpose 函数来重新排列轴的顺序
+        # 这里的 (0, 3, 1, 2) 表示：保持第一个维度不变，将第二个维度（颜色通道）移动到第二位，然后是宽度和高度
+        image_array_transposed = image_array.transpose((0, 3, 1, 2))
+        return image_array_transposed
 
     def postprocess_results(self, results):
         # YOLOv8的后处理步骤可能包括：

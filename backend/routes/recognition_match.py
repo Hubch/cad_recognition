@@ -61,73 +61,13 @@ async def recognition(websocket:WebSocket):
     params: Dict[str, str] = await websocket.receive_json()
 
     print("Received params")
-    # Read the code config settings from the request. Fall back to default if not provided.
-    generated_code_config = ""
-    if "generatedCodeConfig" in params and params["generatedCodeConfig"]:
-        generated_code_config = params["generatedCodeConfig"]
-    if not generated_code_config in get_args(Stack):
-        await throw_error(f"Invalid generated code config: {generated_code_config}")
-        return
-    
-    # Validate the input mode
+                # Validate the input mode
     input_mode = params.get("inputMode")
     if not input_mode in get_args(InputMode):
         await throw_error(f"Invalid input mode: {input_mode}")
         raise Exception(f"Invalid input mode: {input_mode}")
     # Cast the variable to the right type
     validated_input_mode = cast(InputMode, input_mode)
-
-    # Read the model from the request. Fall back to default if not provided.
-    code_generation_model_str = params.get(
-        "codeGenerationModel", Llm.GPT_4O_2024_05_13.value
-    )
-    try:
-        code_generation_model = convert_frontend_str_to_llm(code_generation_model_str)
-    except:
-        await throw_error(f"Invalid model: {code_generation_model_str}")
-        raise Exception(f"Invalid model: {code_generation_model_str}")
-    exact_llm_version = None
-
-    print(
-        f"Generating {generated_code_config} code for uploaded {input_mode} using {code_generation_model} model..."
-    )
-
-    # Get the OpenAI API key from the request. Fall back to environment variable if not provided.
-    # If neither is provided, we throw an error.
-    openai_api_key = None
-    if params["openAiApiKey"]:
-        openai_api_key = params["openAiApiKey"]
-        print("Using OpenAI API key from client-side settings dialog")
-    else:
-        openai_api_key = os.environ.get("OPENAI_API_KEY")
-        if openai_api_key:
-            print("Using OpenAI API key from environment variable")
-
-    if not openai_api_key and (
-        code_generation_model == Llm.GPT_4_VISION
-        or code_generation_model == Llm.GPT_4_TURBO_2024_04_09
-        or code_generation_model == Llm.GPT_4O_2024_05_13
-    ):
-        print("OpenAI API key not found")
-        await throw_error(
-            "No OpenAI API key found. Please add your API key in the settings dialog or add it to backend/.env file. If you add it to .env, make sure to restart the backend server."
-        )
-        return
-
-    # Get the OpenAI Base URL from the request. Fall back to environment variable if not provided.
-    openai_base_url = None
-    # Disable user-specified OpenAI Base URL in prod
-    if not os.environ.get("IS_PROD"):
-        if "openAiBaseURL" in params and params["openAiBaseURL"]:
-            openai_base_url = params["openAiBaseURL"]
-            print("Using OpenAI Base URL from client-side settings dialog")
-        else:
-            openai_base_url = os.environ.get("OPENAI_BASE_URL")
-            if openai_base_url:
-                print("Using OpenAI Base URL from environment variable")
-
-    if not openai_base_url:
-        print("Using official OpenAI URL")
 
     print("Recognizing cad...")
     await websocket.send_json({"type": "status", "value": "Recognizing cad..."})
@@ -136,26 +76,6 @@ async def recognition(websocket:WebSocket):
         await websocket.send_json({"type": "chunk", "value": content})
 
     # pprint_prompt(prompt_messages)  # type: ignore
-    detect_results = []
-    
-    for image in params["images"]:
-        request = DetectRequest(image=image)
-        detect_result = await modelserve(request)
-        print(f"detect_result: {detect_result}")
-        detect_results.append(detect_result)
-    
-    # Assemble the prompt
-    try:
-        prompt_messages = assemble_json_prompt(detect_result, "json")
-    except:
-        await websocket.send_json(
-            {
-                    "type": "error",
-                    "value": "Error assembling prompt.",
-            }
-        )
-        await websocket.close()
-        return
     
     if SHOULD_MOCK_AI_RESPONSE:
         print("SHOULD_MOCK_AI_RESPONSE:",SHOULD_MOCK_AI_RESPONSE)
@@ -163,7 +83,102 @@ async def recognition(websocket:WebSocket):
             process_chunk, input_mode=validated_input_mode
         )
     else:
-        try:
+        try:   
+            # Read the code config settings from the request. Fall back to default if not provided.
+            generated_code_config = ""
+            # if "generatedCodeConfig" in params and params["generatedCodeConfig"]:
+            #     generated_code_config = params["generatedCodeConfig"]
+            # if not generated_code_config in get_args(Stack):
+            #     await throw_error(f"Invalid generated code config: {generated_code_config}")
+            #     return
+            
+            # Read the model from the request. Fall back to default if not provided.
+            # code_generation_model_str = params.get(
+            #     "codeGenerationModel", Llm.GPT_4O_2024_05_13.value
+            # )
+            code_generation_model_str = Llm.GPT_4O_2024_05_13.value
+            try:
+                code_generation_model = convert_frontend_str_to_llm(code_generation_model_str)
+            except:
+                await throw_error(f"Invalid model: {code_generation_model_str}")
+                raise Exception(f"Invalid model: {code_generation_model_str}")
+            exact_llm_version = None
+
+            print(
+                f"Generating {generated_code_config} code for uploaded {input_mode} using {code_generation_model} model..."
+            )
+
+            # Get the OpenAI API key from the request. Fall back to environment variable if not provided.
+            # If neither is provided, we throw an error.
+            openai_api_key = None
+            if params["openAiApiKey"]:
+                openai_api_key = params["openAiApiKey"]
+                print("Using OpenAI API key from client-side settings dialog")
+            else:
+                openai_api_key = os.environ.get("OPENAI_API_KEY")
+                if openai_api_key:
+                    print("Using OpenAI API key from environment variable")
+
+            if not openai_api_key and (
+                code_generation_model == Llm.GPT_4_VISION
+                or code_generation_model == Llm.GPT_4_TURBO_2024_04_09
+                or code_generation_model == Llm.GPT_4O_2024_05_13
+            ):
+                print("OpenAI API key not found")
+                await throw_error(
+                    "No OpenAI API key found. Please add your API key in the settings dialog or add it to backend/.env file. If you add it to .env, make sure to restart the backend server."
+                )
+                return
+
+            # Get the OpenAI Base URL from the request. Fall back to environment variable if not provided.
+            openai_base_url = None
+            # Disable user-specified OpenAI Base URL in prod
+            if not os.environ.get("IS_PROD"):
+                if "openAiBaseURL" in params and params["openAiBaseURL"]:
+                    openai_base_url = params["openAiBaseURL"]
+                    print("Using OpenAI Base URL from client-side settings dialog")
+                else:
+                    openai_base_url = os.environ.get("OPENAI_BASE_URL")
+                    if openai_base_url:
+                        print("Using OpenAI Base URL from environment variable")
+
+            if not openai_base_url:
+                print("Using official OpenAI URL")
+            
+            # request modelserve 
+            detect_results = []
+            try:
+                for image in params["images"]:
+                    request = DetectRequest(image=image)
+                    detect_result = await modelserve(request)
+                    print(f"detect_result: {detect_result}")
+                    # TODO parsing result
+                    detect_results.append(detect_result)
+            except:
+                await websocket.send_json(
+                    {
+                            "type": "error",
+                            "value": "model serve error.",
+                    }
+                )
+                await websocket.close()
+                return
+            
+            # Assemble the prompt
+            try:
+                prompt_messages = assemble_json_prompt(detect_results, "json")
+                print(prompt_messages)
+            except:
+                await websocket.send_json(
+                    {
+                            "type": "error",
+                            "value": "Error assembling prompt.",
+                    }
+                )
+                await websocket.close()
+                return
+            
+               
             if code_generation_model == Llm.CLAUDE_3_SONNET:
                 if not ANTHROPIC_API_KEY:
                     await throw_error(
@@ -186,7 +201,7 @@ async def recognition(websocket:WebSocket):
                     model=code_generation_model,
                 )
                 exact_llm_version = code_generation_model
-       
+            print("Exact used model for generation: ", exact_llm_version)
         except openai.AuthenticationError as e:
             print("[GENERATE_CODE] Authentication failed", e)
             error_message = (
@@ -221,11 +236,9 @@ async def recognition(websocket:WebSocket):
                 )
             )
             return await throw_error(error_message)
-
-    print("Exact used model for generation: ", exact_llm_version)
-
-    # Write the messages dict into a log so that we can debug later
-    write_logs(prompt_messages, completion)
+         # Write the messages dict into a log so that we can debug later
+        write_logs(prompt_messages, completion)
+   
     await websocket.close() 
 
 

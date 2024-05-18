@@ -62,12 +62,12 @@ def converter(base64_str:str):
     img_array = np.array(image)
     return img_array
 
-@serve.deployment
+@serve.deployment(ray_actor_options={"num_cpus": 2, "num_gpus": 1},health_check_timeout_s=60,health_check_period_s=60)
 class OCRTransform:
     def __init__(self, downloader: DeploymentHandle):
         self.downloader = downloader
         # 使用PaddleOCR进行OCR识别
-        self.ocr = paddleocr.PaddleOCR(use_angle_cls=True, lang="ch")  # 这里设置为中文识    
+        self.ocr = paddleocr.PaddleOCR(use_angle_cls=True, lang="ch",use_gpu=True)  # 这里设置为中文识    
 
     async def transform(self, base64_str: str) -> str:
         image = await self.downloader.remote(base64_str)
@@ -90,13 +90,14 @@ class CADDetect:
         try:
             request = await http_request.json()
             image = request["image"]
-            detect_coro = self.detect_responder.remote(image)
             ocr_coro = self.ocr_responder.remote(image)
-            detect_result, ocr_result = await asyncio.gather(detect_coro, ocr_coro)
+            detect_coro = self.detect_responder.remote(image)
+            ocr_result,detect_result = await asyncio.gather(ocr_coro,detect_coro)
             response = {"org_image":image,"detect_result":detect_result,"ocr_result":ocr_result}
             json_response = json.dumps(response)
             self.logger.info(f"cad detect result: {json_response}")
             return await json_response
+            # return response
         except Exception as e:
             self.logger.error(f"Error : {e}")
             return json.dumps({"error":"服务异常"})
