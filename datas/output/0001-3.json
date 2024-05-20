@@ -1,0 +1,226 @@
+{
+  "version": "5.4.1",
+  "flags": {},
+  "shapes": [
+    {
+      "label": "水力控制阀",
+      "points": [
+        [
+          154.61475409836066,
+          76.37704918032787
+        ],
+        [
+          174.28688524590163,
+          90.72131147540983
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "水力控制阀",
+      "points": [
+        [
+          197.23770491803276,
+          78.8360655737705
+        ],
+        [
+          217.72950819672133,
+          88.672131147541
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "水力控制阀",
+      "points": [
+        [
+          156.25409836065575,
+          114.08196721311477
+        ],
+        [
+          175.9262295081967,
+          127.19672131147541
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "水力控制阀",
+      "points": [
+        [
+          196.827868852459,
+          113.672131147541
+        ],
+        [
+          215.27049180327867,
+          128.42622950819674
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "水力控制阀",
+      "points": [
+        [
+          273.05737704918033,
+          175.14754098360658
+        ],
+        [
+          291.09016393442624,
+          185.39344262295083
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "水力控制阀",
+      "points": [
+        [
+          273.87704918032784,
+          229.24590163934428
+        ],
+        [
+          289.8606557377049,
+          242.36065573770495
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "水力控制阀",
+      "points": [
+        [
+          274.28688524590166,
+          283.344262295082
+        ],
+        [
+          290.2704918032787,
+          298.5081967213115
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Y型过滤器",
+      "points": [
+        [
+          175.9262295081967,
+          75.9672131147541
+        ],
+        [
+          193.9590163934426,
+          90.31147540983608
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "Y型过滤器",
+      "points": [
+        [
+          178.79508196721312,
+          114.49180327868854
+        ],
+        [
+          193.9590163934426,
+          128.01639344262298
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "截止阀",
+      "points": [
+        [
+          327.5655737704918,
+          129.65573770491804
+        ],
+        [
+          349.28688524590166,
+          142.7704918032787
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "角座阀",
+      "points": [
+        [
+          331.6639344262295,
+          120.63934426229508
+        ],
+        [
+          345.1885245901639,
+          128.83606557377053
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "装置",
+      "points": [
+        [
+          407.07377049180326,
+          119.40983606557377
+        ],
+        [
+          568.139344262295,
+          310.8032786885246
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    }
+  ],
+  "imagePath": "..\\输入图像\\0001-3.png",
+  "imageData": "base64code",
+  "imageHeight": 338,
+  "imageWidth": 633
+}
