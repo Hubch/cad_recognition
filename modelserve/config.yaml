@@ -46,7 +46,7 @@ applications:
     health_check_period_s: 60.0
     health_check_timeout_s: 60.0
     ray_actor_options:
-      num_cpus: 1.0
+      num_cpus: 2.0
       num_gpus: 1.0
 
   - name: CADDetect

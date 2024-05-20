@@ -1,12 +1,11 @@
 from ray import serve
 from ray.serve.handle import DeploymentHandle
-from pipeline import YOLOv5ONNXPipeline
+from pipeline import YOLOv5ONNXPipeline,OCRPipeline
 import base64   
 import cv2
 import numpy as np 
 import torch
 from PIL import Image
-import paddleocr
 from io import BytesIO
 import json
 import asyncio
@@ -58,7 +57,7 @@ def converterRGB(base64_str:str):
 @serve.deployment
 def converter(base64_str:str):
     image_data = base64.b64decode(base64_str)
-    image = Image.open(BytesIO(image_data))
+    image = Image.open(BytesIO(image_data)).convert("RGB")
     img_array = np.array(image)
     return img_array
 
@@ -67,11 +66,11 @@ class OCRTransform:
     def __init__(self, downloader: DeploymentHandle):
         self.downloader = downloader
         # 使用PaddleOCR进行OCR识别
-        self.ocr = paddleocr.PaddleOCR(use_angle_cls=True, lang="ch",use_gpu=True)  # 这里设置为中文识    
+        self.ocr = OCRPipeline(use_angle_cls=True, lang="ch",use_gpu=False)  # 这里设置为中文识    
 
     async def transform(self, base64_str: str) -> str:
         image = await self.downloader.remote(base64_str)
-        results = self.ocr.ocr(image)
+        results = self.ocr(image)
         return results
 
     async def __call__(self, base64_str: str):
@@ -93,17 +92,16 @@ class CADDetect:
             ocr_coro = self.ocr_responder.remote(image)
             detect_coro = self.detect_responder.remote(image)
             ocr_result,detect_result = await asyncio.gather(ocr_coro,detect_coro)
-            response = {"org_image":image,"detect_result":detect_result,"ocr_result":ocr_result}
+            response = {"org_image":image,"detect_result":"detect_result","ocr_result":ocr_result}
             json_response = json.dumps(response)
             self.logger.info(f"cad detect result: {json_response}")
-            return await json_response
+            return  json_response
             # return response
         except Exception as e:
             self.logger.error(f"Error : {e}")
             return json.dumps({"error":"服务异常"})
             # 根据需要处理异常
         
-    
 
 objectdetect_responder = ObjectDetect.bind(converterRGB.bind())
 ocrtransform_responder = OCRTransform.bind(converter.bind())
