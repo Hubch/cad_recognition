@@ -1,0 +1,17 @@
+0000000000000000000000000000000000000000 7dd55cb84c96ad68dba8547b6eb777a350fc9dce ailven.liu <ailven.liu@mbcf4qmk4th7.fareast.nevint.com> 1715912246 +0800	clone: from https://github.com/Hubch/cad_recognition.git
+7dd55cb84c96ad68dba8547b6eb777a350fc9dce 7dd55cb84c96ad68dba8547b6eb777a350fc9dce ailven.liu <ailven.liu@mbcf4qmk4th7.fareast.nevint.com> 1715918056 +0800	checkout: moving from master to ailven_master_det_module
+7dd55cb84c96ad68dba8547b6eb777a350fc9dce ab3f5f87fa43cc4cb9d881840b071ce0b4ad741d ailven.liu <ailven.liu@mbcf4qmk4th7.fareast.nevint.com> 1715942324 +0800	commit: tmp store
+ab3f5f87fa43cc4cb9d881840b071ce0b4ad741d f82d7c17e47f0b9d88548f6436c39ea82751f892 AilvenLIU <liuxiang@stu.ouc.edu.cn> 1715942371 +0800	commit (amend): tmp store
+f82d7c17e47f0b9d88548f6436c39ea82751f892 02032efbc4975f56088467dff0474d91cfa21280 AilvenLIU <liuxiang@stu.ouc.edu.cn> 1716028184 +0800	commit: debug
+02032efbc4975f56088467dff0474d91cfa21280 7dd55cb84c96ad68dba8547b6eb777a350fc9dce AilvenLIU <liuxiang@stu.ouc.edu.cn> 1716028191 +0800	checkout: moving from ailven_master_det_module to master
+7dd55cb84c96ad68dba8547b6eb777a350fc9dce 93200b56b76764d11e52265830a8c74d108ef788 AilvenLIU <liuxiang@stu.ouc.edu.cn> 1716028197 +0800	pull: Fast-forward
+93200b56b76764d11e52265830a8c74d108ef788 02032efbc4975f56088467dff0474d91cfa21280 AilvenLIU <liuxiang@stu.ouc.edu.cn> 1716028225 +0800	checkout: moving from master to ailven_master_det_module
+02032efbc4975f56088467dff0474d91cfa21280 93200b56b76764d11e52265830a8c74d108ef788 AilvenLIU <liuxiang@stu.ouc.edu.cn> 1716028229 +0800	rebase (start): checkout master
+93200b56b76764d11e52265830a8c74d108ef788 ecf4ce01bdaa423c78730b0629dc38d2876d94f5 AilvenLIU <liuxiang@stu.ouc.edu.cn> 1716028229 +0800	rebase (pick): tmp store
+ecf4ce01bdaa423c78730b0629dc38d2876d94f5 cab676e1be0872862a0d800145b4062a82af4752 AilvenLIU <liuxiang@stu.ouc.edu.cn> 1716028229 +0800	rebase (pick): debug
+cab676e1be0872862a0d800145b4062a82af4752 cab676e1be0872862a0d800145b4062a82af4752 AilvenLIU <liuxiang@stu.ouc.edu.cn> 1716028229 +0800	rebase (finish): returning to refs/heads/ailven_master_det_module
+cab676e1be0872862a0d800145b4062a82af4752 9d52ec9858d62347ea882c259ca75f1092ba7fb0 AilvenLIU <liuxiang@stu.ouc.edu.cn> 1716028671 +0800	commit: runnable
+9d52ec9858d62347ea882c259ca75f1092ba7fb0 93aefbdd0e9ba126a4ffeb51dcd4b6e1bdf7203e AilvenLIU <liuxiang@stu.ouc.edu.cn> 1716218503 +0800	commit: may runnable
+93aefbdd0e9ba126a4ffeb51dcd4b6e1bdf7203e 93200b56b76764d11e52265830a8c74d108ef788 AilvenLIU <liuxiang@stu.ouc.edu.cn> 1716218573 +0800	checkout: moving from ailven_master_det_module to master
+93200b56b76764d11e52265830a8c74d108ef788 3e80dcdcf7b247678106b381de731c6bc2ae7ba2 AilvenLIU <liuxiang@stu.ouc.edu.cn> 1716218579 +0800	pull: Fast-forward
+3e80dcdcf7b247678106b381de731c6bc2ae7ba2 93aefbdd0e9ba126a4ffeb51dcd4b6e1bdf7203e AilvenLIU <liuxiang@stu.ouc.edu.cn> 1716218701 +0800	checkout: moving from master to ailven_master_det_with_framework

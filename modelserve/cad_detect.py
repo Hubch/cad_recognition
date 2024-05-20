@@ -11,7 +11,7 @@ from io import BytesIO
 import json
 import asyncio
 
-onnx_model_path = 'models/yolov8n-seg.onnx'  # ONNX模型文件的路径
+onnx_model_path = 'models/v5n_coco_640_fp32.onnx'  # ONNX模型文件的路径
 
 import logging
 
@@ -48,39 +48,45 @@ class ObjectDetect:
     async def __call__(self, base64_str: str):
         return await self.detect(base64_str)
     
+# occurs unexcepted errors
+# @serve.deployment
+# def converterRGB(base64_str:str):
+#     image_data = base64.b64decode(base64_str)
+#     image = Image.open(BytesIO(image_data)).convert("RGB")
+#     return image
 
 @serve.deployment
-def converterRGB(base64_str:str):
-    image_data = base64.b64decode(base64_str)
-    image = Image.open(BytesIO(image_data)).convert("RGB")
-    return image
+def CvConverter(base64_str:str):
+    # return BGR image which required be convert to RGB in post 
+    binary_data = base64.b64decode(base64_str)
+    return cv2.imdecode(np.frombuffer(binary_data, np.uint8), cv2.IMREAD_COLOR)
 
-@serve.deployment
-def converter(base64_str:str):
-    image_data = base64.b64decode(base64_str)
-    image = Image.open(BytesIO(image_data))
-    img_array = np.array(image)
-    return img_array
+# @serve.deployment
+# def converter(base64_str:str):
+#     image_data = base64.b64decode(base64_str)
+#     image = Image.open(BytesIO(image_data))
+#     img_array = np.array(image)
+#     return img_array
 
-@serve.deployment
-class OCRTransform:
-    def __init__(self, downloader: DeploymentHandle):
-        self.downloader = downloader
-        # 使用PaddleOCR进行OCR识别
-        self.ocr = paddleocr.PaddleOCR(use_angle_cls=True, lang="ch")  # 这里设置为中文识    
+# @serve.deployment
+# class OCRTransform:
+#     def __init__(self, downloader: DeploymentHandle):
+#         self.downloader = downloader
+#         # 使用PaddleOCR进行OCR识别
+#         self.ocr = paddleocr.PaddleOCR(use_angle_cls=True, lang="ch")  # 这里设置为中文识    
 
-    async def transform(self, base64_str: str) -> str:
-        image = await self.downloader.remote(base64_str)
-        results = self.ocr.ocr(image)
-        return results
+#     async def transform(self, base64_str: str) -> str:
+#         image = await self.downloader.remote(base64_str)
+#         results = self.ocr.ocr(image)
+#         return results
 
-    async def __call__(self, base64_str: str):
-        return await self.transform(base64_str)
+#     async def __call__(self, base64_str: str):
+#         return await self.transform(base64_str)
 
 @serve.deployment
 class CADDetect:
     def __init__(
-        self, detect_responder: DeploymentHandle, ocr_responder: DeploymentHandle
+        self, detect_responder: DeploymentHandle, ocr_responder
     ):
         self.detect_responder = detect_responder
         self.ocr_responder = ocr_responder
@@ -91,9 +97,9 @@ class CADDetect:
             request = await http_request.json()
             image = request["image"]
             detect_coro = self.detect_responder.remote(image)
-            ocr_coro = self.ocr_responder.remote(image)
-            detect_result, ocr_result = await asyncio.gather(detect_coro, ocr_coro)
-            response = {"org_image":image,"detect_result":detect_result,"ocr_result":ocr_result}
+            # ocr_coro = self.ocr_responder.remote(image)
+            detect_result, ocr_result = await asyncio.gather(detect_coro, None)
+            response = {"org_image":image,"detect_result":detect_result,"ocr_result":None}
             json_response = json.dumps(response)
             self.logger.info(f"cad detect result: {json_response}")
             return await json_response
@@ -104,6 +110,6 @@ class CADDetect:
         
     
 
-objectdetect_responder = ObjectDetect.bind(converterRGB.bind())
-ocrtransform_responder = OCRTransform.bind(converter.bind())
-cad_detect = CADDetect.options(route_prefix="/caddetect").bind(objectdetect_responder, ocrtransform_responder)
+objectdetect_responder = ObjectDetect.bind(CvConverter.bind())
+# ocrtransform_responder = OCRTransform.bind(converter.bind())
+cad_detect = CADDetect.options(route_prefix="/caddetect").bind(objectdetect_responder, None)

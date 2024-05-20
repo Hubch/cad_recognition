@@ -36,12 +36,14 @@ applications:
 
   deployments:
 
-  - name: converterRGB
+  # - name: converterRGB # occurs unexceptd error
 
   - name: ObjectDetect
 
-  - name: converter
+  # - name: converter
 
-  - name: OCRTransform
+  - name: CvConverter 
+
+  # - name: OCRTransform
 
   - name: CADDetect
