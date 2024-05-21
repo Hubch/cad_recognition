@@ -10,7 +10,7 @@ from io import BytesIO
 import json
 import asyncio
 
-onnx_model_path = 'models/yolov8n-seg.onnx'  # ONNX模型文件的路径
+onnx_model_path = 'models/v5n_coco_640_fp32.onnx'  # ONNX模型文件的路径
 
 import logging
 
@@ -47,6 +47,11 @@ class ObjectDetect:
     async def __call__(self, base64_str: str):
         return await self.detect(base64_str)
     
+@serve.deployment
+def CvConverter(base64_str:str):
+    # return BGR image which required be convert to RGB in post 
+    binary_data = base64.b64decode(base64_str)
+    return cv2.imdecode(np.frombuffer(binary_data, np.uint8), cv2.IMREAD_COLOR)
 
 @serve.deployment
 def converterRGB(base64_str:str):
@@ -92,7 +97,7 @@ class CADDetect:
             ocr_coro = self.ocr_responder.remote(image)
             detect_coro = self.detect_responder.remote(image)
             ocr_result,detect_result = await asyncio.gather(ocr_coro,detect_coro)
-            response = {"org_image":image,"detect_result":"detect_result","ocr_result":ocr_result}
+            response = {"org_image":image,"detect_result":detect_result,"ocr_result":ocr_result}
             json_response = json.dumps(response)
             self.logger.info(f"cad detect result: {json_response}")
             return  json_response
@@ -103,6 +108,6 @@ class CADDetect:
             # 根据需要处理异常
         
 
-objectdetect_responder = ObjectDetect.bind(converterRGB.bind())
+objectdetect_responder = ObjectDetect.bind(CvConverter.bind())
 ocrtransform_responder = OCRTransform.bind(converter.bind())
 cad_detect = CADDetect.options(route_prefix="/caddetect").bind(objectdetect_responder, ocrtransform_responder)
