@@ -24,13 +24,13 @@ modelserve/__pycache__/cad_detect.cpython-310.pyc
 modelserve/__pycache__/cad_detect.cpython-310.pyc
 modelserve/__pycache__/pipeline.cpython-310.pyc
 
-modelserve/data/output/**
+modelserve/data/output/*
 !/modelserve/data/output/dataouput
 
-modelserve/data/input/**
+modelserve/data/input/*
 !/modelserve/data/input/Data files are stored here
 
-/modelserve/run/**
+modelserve/run/*
 !/modelserve/run/result
 
 
