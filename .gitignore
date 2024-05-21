@@ -28,7 +28,7 @@ modelserve/data/output/**
 !/modelserve/data/output/dataouput
 
 modelserve/data/input/**
-!/modelserve/data/input/Datafilesarestoredhere
+!/modelserve/data/input/Data files are stored here
 
 /modelserve/run/**
 !/modelserve/run/result
