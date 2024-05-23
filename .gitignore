@@ -33,6 +33,6 @@ modelserve/data/input/*
 modelserve/run/*
 !/modelserve/run/result
 
-
+*.pyc
 
 

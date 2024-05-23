@@ -3,7 +3,7 @@ import numpy as np
 from paddleocr import PaddleOCR, draw_ocr
 import LabelMap
 import cv2
-import utils.utils as utils
+from utils import utils 
 
 class YOLOv5ONNXPipeline:
     def __init__(self, 
@@ -16,7 +16,8 @@ class YOLOv5ONNXPipeline:
                  text_thickness=1,
                  hide_labels=False, 
                  hide_conf=True,
-                 half=False):
+                 half=False,
+                 threshold = 0.2):
         # 初始化ONNX运行时会话
         self.session = onnxruntime.InferenceSession(onnx_model_path)
         self.input_name = self.session.get_inputs()[0].name
@@ -30,6 +31,7 @@ class YOLOv5ONNXPipeline:
         self.hide_conf = hide_conf
         self.half = half
         self.labels_map = LabelMap.labels_map
+        self.threshold = threshold
 
         print("input_shape:", self.session.get_inputs()[0].shape)
 
@@ -107,6 +109,8 @@ class YOLOv5ONNXPipeline:
             cv2.rectangle(image, (x0, y0), (x1, y1), (0, 0, 255), thickness=self.line_thickness)
             cv2.putText(image, '{0}--{1:.2f}'.format(self.labels_map[classIds[i]], confidences[i]), (x0, y0 - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), thickness=self.text_thickness)
+        
+        print(f"image.shape：{image.shape}")
         return image
         
     def __call__(self, image):
@@ -118,6 +122,7 @@ class YOLOv5ONNXPipeline:
         boxes, classIds, confidences = self.postprocess_results(boxes, classIds, confidences)
         # 画图传回去
         image_with_box = self.draw_image_with_bbox(image, boxes, classIds, confidences)
+        print(f"image_with_box:{image_with_box.shape}")
         image_base64_str = utils.convertBase64(image_with_box)
         print ("boxes: {}, classIds: {}, confidence: {}".format(boxes, classIds, confidences))
         result = {"image_with_box":image_base64_str,"boxes":boxes, "classIds":classIds, "confidences":classIds}

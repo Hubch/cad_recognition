@@ -151,7 +151,6 @@ async def recognition(websocket:WebSocket):
                 for image in params["images"]:
                     request = DetectRequest(image=image)
                     detect_result = await modelserve(request)
-                    print(f"detect_result: {detect_result}")
                     # TODO parsing result
                     detect_results.append(detect_result)
             except:
@@ -258,8 +257,8 @@ async def modelserve(request: DetectRequest):
         async with httpx.AsyncClient(timeout=60) as client:
             response = await client.post(
                 api_base_url,
-                files={"image": request.image},
-                timeout=10
+                json={"image": request.image.split(",")[1]},
+                timeout=20
             )
             
             if response.status_code == 200:

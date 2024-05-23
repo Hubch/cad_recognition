@@ -36,7 +36,7 @@ applications:
 
   deployments:
 
-  - name: converterRGB
+  - name: CvConverter
 
   - name: ObjectDetect
 

@@ -147,19 +147,19 @@ function App() {
   };
 
   const regenerate = () => {
-    if (currentVersion === null) {
-      toast.error(
-        "No current version set. Please open a Github issue as this shouldn't happen."
-      );
-      return;
-    }
+    // if (currentVersion === null) {
+    //   toast.error(
+    //     "No current version set. Please open a Github issue as this shouldn't happen."
+    //   );
+    //   return;
+    // }
 
-    // Retrieve the previous command
-    const previousCommand = appHistory[currentVersion];
-    if (previousCommand.type !== "ai_create") {
-      toast.error("Only the first version can be regenerated.");
-      return;
-    }
+    // // Retrieve the previous command
+    // const previousCommand = appHistory[currentVersion];
+    // if (previousCommand.type !== "ai_create") {
+    //   toast.error("Only the first version can be regenerated.");
+    //   return;
+    // }
 
     // Re-run the create
     doCreate(referenceImages, inputMode);

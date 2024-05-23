@@ -5,11 +5,22 @@ import numpy as np
 from PIL import Image
 from io import BytesIO
 import base64
+import cv2
 
 def convertBase64(image):
         # 将NumPy数组转换为PIL图像
     if isinstance(image, np.ndarray):
         # 如果是NumPy数组，使用PIL的fromarray函数将其转换为PIL图像
+        if len(image.shape) == 4:
+            image = image.squeeze(0).transpose((1, 2,0))
+            print(f"convert:{image.shape}")
+        # 检查数组数据类型并转换为 uint8
+        if image.dtype != np.uint8:
+            # 确保值在0-255范围内
+            image = np.clip(image, 0, 1)
+            # 转换为 uint8 类型
+            image = (image * 255).astype(np.uint8)
+            
         image = Image.fromarray(image)
         # 创建一个字节流对象
     buffered = BytesIO()

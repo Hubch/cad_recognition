@@ -19,7 +19,7 @@ ASPECT = """
 location, category
 """
 
-JSON_SYSTEM_PROMPT ="""
+JSON_SYSTEM_PROMPT =f"""
 You are an expert in comparing picture information.
 You have now got the image recognition information and ocr information of two images from the user, and then you need to judge whether the analysis is consistent or not based on this information, and output the inconsistent parts as per the format.
 
