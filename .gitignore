@@ -34,5 +34,3 @@ modelserve/run/*
 !/modelserve/run/result
 
 *.pyc
-
-

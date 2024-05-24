@@ -9,8 +9,9 @@ from PIL import Image
 from io import BytesIO
 import json
 import asyncio
+from utils.convert import CustomJSONEncoder
 
-onnx_model_path = 'models/v5n_coco_640_fp32.onnx'  # ONNX模型文件的路径
+onnx_model_path = 'models/yolov5l_cad_gpu-1.0.onnx'  # ONNX模型文件的路径
 
 import logging
 
@@ -98,7 +99,7 @@ class CADDetect:
             detect_coro = self.detect_responder.remote(image)
             ocr_result,detect_result = await asyncio.gather(ocr_coro,detect_coro)
             response = {"org_image":image,"detect_result":detect_result,"ocr_result":ocr_result}
-            json_response = json.dumps(response)
+            json_response = json.dumps(response,cls = CustomJSONEncoder)
             self.logger.info(f"cad detect result: {json_response}")
             return  json_response
             # return response

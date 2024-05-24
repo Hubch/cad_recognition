@@ -109,8 +109,6 @@ class YOLOv5ONNXPipeline:
             cv2.rectangle(image, (x0, y0), (x1, y1), (0, 0, 255), thickness=self.line_thickness)
             cv2.putText(image, '{0}--{1:.2f}'.format(self.labels_map[classIds[i]], confidences[i]), (x0, y0 - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), thickness=self.text_thickness)
-        
-        print(f"image.shape：{image.shape}")
         return image
         
     def __call__(self, image):
@@ -122,10 +120,13 @@ class YOLOv5ONNXPipeline:
         boxes, classIds, confidences = self.postprocess_results(boxes, classIds, confidences)
         # 画图传回去
         image_with_box = self.draw_image_with_bbox(image, boxes, classIds, confidences)
-        print(f"image_with_box:{image_with_box.shape}")
         image_base64_str = utils.convertBase64(image_with_box)
-        print ("boxes: {}, classIds: {}, confidence: {}".format(boxes, classIds, confidences))
-        result = {"image_with_box":image_base64_str,"boxes":boxes, "classIds":classIds, "confidences":classIds}
+        result = {
+            "image_with_box":image_base64_str,
+            "boxes":boxes, 
+            "classIds":classIds, 
+            "confidences": [round(num, 2) for num in confidences]
+            }
         return result
 
 class YOLOv8SegmentationPipeline:
@@ -187,7 +188,8 @@ class OCRPipeline:
         # 准备JSON格式的数据结构
         ocr_results = {
             "draw_image":utils.convertBase64(draw_image),
-            "detections": []
+            "detections": [],
+            "texts":[line[1][0] for line in result]
         }
 
         # 遍历PaddleOCR的输出结果

@@ -11,7 +11,7 @@ from llm import (
 )
 from openai.types.chat import ChatCompletionMessageParam
 from mock_llm import mock_completion
-from typing import Dict, List, cast, get_args
+from typing import Dict, List, cast, get_args,Union
 from prompts import assemble_json_prompt
 from datetime import datetime
 import json
@@ -21,7 +21,7 @@ from prompts.types import Stack
 from ws.constants import APP_ERROR_WEB_SOCKET_CODE  # type: ignore
 from pydantic import BaseModel
 import httpx
-
+from detect_result import detect_completion
 
 router = APIRouter()
 
@@ -162,11 +162,13 @@ async def recognition(websocket:WebSocket):
                 )
                 await websocket.close()
                 return
-            
+       
+            prompt_data = get_data_from_result(detect_results)
+            completion = await detect_completion(
+            process_chunk, result=detect_results)
             # Assemble the prompt
             try:
-                prompt_messages = assemble_json_prompt(detect_results, "json")
-                print(prompt_messages)
+                prompt_messages = assemble_json_prompt(prompt_data, "json")
             except:
                 await websocket.send_json(
                     {
@@ -185,14 +187,14 @@ async def recognition(websocket:WebSocket):
                     )
                     raise Exception("No Anthropic key")
 
-                completion = await stream_claude_response(
+                completion += await stream_claude_response(
                     prompt_messages,  # type: ignore
                     api_key=ANTHROPIC_API_KEY,
                     callback=lambda x: process_chunk(x),
                 )
                 exact_llm_version = code_generation_model
             else:
-                completion = await stream_openai_response(
+                completion += await stream_openai_response(
                     prompt_messages,  # type: ignore
                     api_key=openai_api_key,
                     base_url=openai_base_url,
@@ -243,13 +245,29 @@ async def recognition(websocket:WebSocket):
 
 
 class DetectResponse(BaseModel):
-    org_image :str
-    object_detect : str
-    ocr_result : str
+    org_image:str
+    detect_result:ObjectDetectResult
+    ocr_result:OcrDetect
+
 
 class DetectRequest(BaseModel):
     image:str
+   
+class OcrDetect(BaseModel):
+    draw_image:str
+    detections:List
+    texts:List
+    
+class ObjectDetectResult(BaseModel):
+    image_with_box:str
+    boxes:List
+    classIds:List
+    confidences:List
 
+
+def get_data_from_result(result) -> List[Union[str, None]]:
+    pass
+    
 
 async def modelserve(request: DetectRequest):
     api_base_url = os.environ.get("MODEL_SERVE_URL", "http://localhost:8000/caddetect")
