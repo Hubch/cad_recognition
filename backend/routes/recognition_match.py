@@ -15,8 +15,6 @@ from typing import Dict, List, cast, get_args,Union
 from prompts import assemble_json_prompt
 from datetime import datetime
 import json
-from prompts.types import Stack
-
 # from utils import pprint_prompt
 from ws.constants import APP_ERROR_WEB_SOCKET_CODE  # type: ignore
 from pydantic import BaseModel
@@ -243,31 +241,48 @@ async def recognition(websocket:WebSocket):
     await websocket.close() 
 
 
-
-class DetectResponse(BaseModel):
-    org_image:str
-    detect_result:ObjectDetectResult
-    ocr_result:OcrDetect
-
-
 class DetectRequest(BaseModel):
     image:str
    
-class OcrDetect(BaseModel):
-    draw_image:str
-    detections:List
-    texts:List
+# class OcrDetect(BaseModel):
+#     draw_image:str
+#     detections:List
+#     texts:List
     
-class ObjectDetectResult(BaseModel):
-    image_with_box:str
-    boxes:List
-    classIds:List
-    confidences:List
-
-
+# class ObjectDetectResult(BaseModel):
+#     image_with_box:str
+#     boxes:List
+#     classIds:List
+#     confidences:List
+    
+# class DetectResponse(BaseModel):
+#     org_image:str
+#     detect_result:str
+#     ocr_result:str
+   
 def get_data_from_result(result) -> List[Union[str, None]]:
-    pass
-    
+    prompt_data = []
+    if isinstance(result, list):  # 检查 result 是否是列表
+        for index ,itme in enumerate(result):
+            # 初始化 detect_result 和 ocr_result
+            print(type(itme))
+            
+            detect_result = {
+                "boxes": itme["detect_result"]["boxes"],
+                "classIds": itme["detect_result"]["classIds"],
+                "confidences": itme["detect_result"]["confidences"]
+            }
+            ocr_result = {
+                "detections": itme["ocr_result"]["detections"],
+                "texts": itme["ocr_result"]["texts"]
+            }
+            pitem = {
+                "imageId": index,
+                "detect_result": detect_result,
+                "ocr_result": ocr_result
+            }
+            prompt_data.append(pitem)
+    return prompt_data
 
 async def modelserve(request: DetectRequest):
     api_base_url = os.environ.get("MODEL_SERVE_URL", "http://localhost:8000/caddetect")

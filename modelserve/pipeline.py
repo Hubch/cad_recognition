@@ -97,18 +97,32 @@ class YOLOv5ONNXPipeline:
         return pred_boxes, pred_classes, pred_confes
     
     def draw_image_with_bbox(self, image, boxes, classIds, confidences):
+     
         for i, _ in enumerate(boxes):
             box = boxes[i]
+            print(f"box: {box}")
             left, top, width, height = box[0], box[1], box[2], box[3]
             box = (left, top, left + width, top + height)
-            box = np.squeeze(
-                utils.scale_coords(self.img_size, np.expand_dims(box, axis=0).astype("float"), image.shape[1:]).round(), axis=0).astype(
-                "int")  # 进行坐标还原
+            # 调试输出，检查原始边界框坐标
+            print(f"Original box: ({left}, {top}, {left+width}, {top+height})")
+            # 进行坐标还原
+            # box = np.squeeze(
+            #     utils.scale_coords(self.img_size, np.expand_dims(box, axis=0).astype("float"), image.shape[1:]).round(), axis=0).astype(
+            #     "int")
             x0, y0, x1, y1 = box[0], box[1], box[2], box[3]
+            # 调试输出，检查转换后的边界框坐标
+            print(f"Scaled box: ({x0}, {y0}, {x1}, {y1})")
             # 执行画图函数
             cv2.rectangle(image, (x0, y0), (x1, y1), (0, 0, 255), thickness=self.line_thickness)
             cv2.putText(image, '{0}--{1:.2f}'.format(self.labels_map[classIds[i]], confidences[i]), (x0, y0 - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), thickness=self.text_thickness)
+        
+        # 将通道维度调整到最后一个维度
+        img_transposed = np.transpose(image, (0, 2, 3, 1))
+        # 将形状调整为 (640, 640, 3)
+        image = np.squeeze(img_transposed)
+        cv2.imwrite("run/output.jpg", image)
+        print(f"image shape :{image.shape}")
         return image
         
     def __call__(self, image):

@@ -25,7 +25,7 @@ def generate_html_response(result):
 		<h3>元件识别结果</h3>
         <div class="iamge-container">
     		<img class="responsive-image" src="data:image/png;base64,{result[0]["detect_result"]["image_with_box"]}" >
-    		<img class="responsive-image" src="'data:image/png;base64,{result[1]["detect_result"]["image_with_box"]}">
+    		<img class="responsive-image" src="data:image/png;base64,{result[1]["detect_result"]["image_with_box"]}">
         </div>
       <div>
         <div class="iamge-container">
@@ -47,24 +47,16 @@ def generate_html_response(result):
     """
     html += f"""<script>{JS}</script>"""
     
+    html += f"""{MACTCH_REUSLT}"""
+    html += "</body></html>"
     return html
 
 
-class ResultInfo:
-    org_images:list[str]
-    detect_image:list[str]
-    ocr_result =list[str]
-    ocr_image =list[str]
-    
-HEAD = """
-<head>
-	<meta charset="UTF-8">
-	<title>检测结果</title>
-	<style>
-		{CLASS}
-	</style>
-</head>
-"""
+# class ResultInfo:
+#     org_images:list[str]
+#     detect_image:list[str]
+#     ocr_result =list[str]
+#     ocr_image =list[str]
 CLASS = """
 .container {
 	flex-direction: column;
@@ -138,6 +130,16 @@ JS ="""
             this.classList.toggle('expanded');
         });
     });
+"""
+   
+HEAD = f"""
+<head>
+	<meta charset="UTF-8">
+	<title>检测结果</title>
+	<style>
+		{CLASS}
+	</style>
+</head>
 """
 
 MACTCH_REUSLT ="""
