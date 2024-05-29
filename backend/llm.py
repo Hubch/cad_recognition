@@ -6,7 +6,7 @@ from openai.types.chat import ChatCompletionMessageParam, ChatCompletionChunk
 from config import IS_DEBUG_ENABLED
 from debug.DebugFileWriter import DebugFileWriter
 
-from utils import pprint_prompt
+from utils.utils import pprint_prompt
 
 
 # Actual model versions that are passed to the LLMs and stored in our logs
@@ -62,25 +62,29 @@ async def stream_openai_response(
     try:
         stream = await client.chat.completions.create(**params)  # type: ignore
         full_response = ""
+        long_text_response = ""
+        await callback('<pre><code class="language-python">')
         async for chunk in stream:  # type: ignore
             if chunk:
                 assert isinstance(chunk, ChatCompletionChunk)
-                print("chunk:", chunk) 
                 content = chunk.choices[0].delta.content or ""
-                print("content:", content)
                 full_response += content
-                await callback(content)
+                long_text_response+=content
+                if len(long_text_response) > 500:
+                    await callback(long_text_response)
+                    long_text_response = ""
             else:
                  print("Empty chunk received.")
+        if long_text_response != "":
+            await callback(long_text_response)
+        await callback("</code></pre>")
     except Exception as e:
         print(f"Error while streaming OpenAI response: {e}")
         await client.close()
         return "Error while streaming OpenAI response"
     
     await client.close()
-    print("full_response:",full_response)
     return full_response
-
 
 # TODO: Have a seperate function that translates OpenAI messages to Claude messages
 async def stream_claude_response(

@@ -25,7 +25,7 @@ def generate_html_response(result):
 		<h3>元件识别结果</h3>
         <div class="iamge-container">
     		<img class="responsive-image" src="data:image/png;base64,{result[0]["detect_result"]["image_with_box"]}" >
-    		<img class="responsive-image" src="'data:image/png;base64,{result[1]["detect_result"]["image_with_box"]}">
+    		<img class="responsive-image" src="data:image/png;base64,{result[1]["detect_result"]["image_with_box"]}">
         </div>
       <div>
         <div class="iamge-container">
@@ -33,38 +33,53 @@ def generate_html_response(result):
     		<img class="responsive-image" src="data:image/png;base64,{result[0]["ocr_result"]["draw_image"]}">
             <h4>文本内容</h4>
             <div type="text" class="input">
-                {"".join(result[0]["ocr_result"]["texts"])}
+                {",".join(result[0]["ocr_result"]["texts"])}
             </div>
             <h3>OCR转换结果2</h3>
     		<img class="responsive-image" src="data:image/png;base64,{result[1]["ocr_result"]["draw_image"]}">
             <h4>文本内容</h4>
             <div type="text" class="input">
-                {"".join(result[1]["ocr_result"]["texts"])}
+                {",".join(result[1]["ocr_result"]["texts"])}
             </div>
         </div>
       </div>
     </div>
     """
     html += f"""<script>{JS}</script>"""
-    
     return html
 
 
-class ResultInfo:
-    org_images:list[str]
-    detect_image:list[str]
-    ocr_result =list[str]
-    ocr_image =list[str]
-    
-HEAD = """
-<head>
-	<meta charset="UTF-8">
-	<title>检测结果</title>
-	<style>
-		{CLASS}
-	</style>
-</head>
-"""
+def generate_match_response(message):
+    html = f"<div class='result'>{message}</div>"
+    html += f"{MACTCH_REUSLT}"
+    html += "</body></html>"
+    return html
+
+
+def generate_image_response(message,detail,describe):
+    html = ""
+    plist = "<p>" + "</p><p>".join(detail) + "</p>"
+    html +=f"""
+    <h3>对比结果</h3>
+    <div class="iamge-container">
+    	<img class="responsive-image" src="data:image/png;base64,{message[0]}" >
+    	<img class="responsive-image" src="data:image/png;base64,{message[1]}">
+    </div>
+    <h3>详细区别</h3>
+    <div class ="input">{plist}</div>
+    <h3>总结</h3>
+    <div class ="input" >
+    {describe}
+    </div>
+    """
+    return html
+
+
+# class ResultInfo:
+#     org_images:list[str]
+#     detect_image:list[str]
+#     ocr_result =list[str]
+#     ocr_image =list[str]
 CLASS = """
 .container {
 	flex-direction: column;
@@ -109,10 +124,12 @@ pre {
 }
 
 pre code {
-    font-family: monospace;
-    font-size: 14px;
-}
-
+      display: block;
+      padding: 1em;
+      overflow-x: auto;
+      background-color: #f4f4f4;
+      border: 1px solid #ddd;
+    }
 .responsive-image {
     width: 100%;
     max-width: 500px; /* 初始图片的最大宽度 */
@@ -138,6 +155,19 @@ JS ="""
             this.classList.toggle('expanded');
         });
     });
+"""
+   
+HEAD = f"""
+<head>
+	<meta charset="UTF-8">
+	<title>检测结果</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.2/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+	<style>
+		{CLASS}
+	</style>
+</head>
 """
 
 MACTCH_REUSLT ="""

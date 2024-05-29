@@ -2,16 +2,10 @@ from prompts.types import SystemPrompts
 
 RETURN_FORMAT="""
 {
-  "commonalities": {
-    "objects": ["List", "of", "common", "objects"],
-    "scenes": ["Similar", "scenes", "or", "settings"],
-    "colors": ["Common", "color", "schemes", "or", "tones"]
-  },
   "differences": {
-    "objects": ["List", "of", "unique", "objects", "in", "each", "image"],
-    "actions": ["Different", "actions", "performed", "by", "people", "or", "objects"],
-    "textures": ["Distinct", "textures", "or", "patterns"],
-    "lighting": ["Variations", "in", "light", "source", "or", "intensity"]
+    "images": [{"imageid":0,"boxes":[{"bbox":[],"label":""},{"bbox":[],"label":""}]},{"imageid":1,"boxes":[{"bbox":[],"label":""},{"bbox":[],"label":""}]}],
+    "detail": [每一行结构化：图片1元件：xx，图片2元件：xx，图片1的ocr信息:xx,图片2的ocr信息,差异：xxx],
+    "describe": "总结:总体来看,图片1跟图片2的差异"
   }
 }
 """
@@ -20,17 +14,27 @@ location, category
 """
 
 JSON_SYSTEM_PROMPT =f"""
-You are an expert in comparing picture information.
-You have now got the image recognition information and ocr information of two images from the user, and then you need to judge whether the analysis is consistent or not based on this information, and output the inconsistent parts as per the format.
+You are an expert in recognising information from matching CAD images.
+Now, you have obtained two images from a user that contain image recognition information and OCR information for each image. Combine the recognition information and OCR information for each image to understand and analyse the differences between the two images.
 
-- Analyze the following two images and return the similarities and differences in a structured JSON format.
-- Ensure the analysis includes but is not limited to the following aspects:{ASPECT}. 
-- Provide detailed descriptions and comparisons for each aspect.
+- Combine the image recognition information with the OCR information to match and return the different modules in the two images in a structured JSON format.
+- Chinese Response
+- Please state in the detailed description section of your response
+- Please analyse based on the semantic information and topological relationship between the two images, it is necessary to ignore the positional error
+- Note: 1. Only the differences are returned; 2. The image recognition result is the focus, the OCR result is the related information.
 
-Return in full in the following format
+Important:pay particular attention to the difference between valves such as "闸阀" valves and "球阀" valves
 
-Example of the return format:
+Complete the return in the following format
+Example of return format:
 {RETURN_FORMAT}
+
+Explanation of the meaning of the parameters in the reply example
+{{"differences"}}:where the two images differ
+{{"images"}}: output the differences between the two images.
+{{"detail"}}: describes in detail the differences between the two images in a particular module.
+{{"describe"}}: a summary description
+
 """
 
 CAD_MATCH_SYSTEM_PROMPTS = SystemPrompts(

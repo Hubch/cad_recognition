@@ -13,7 +13,7 @@ import os
 import asyncio
 from datetime import datetime
 from prompts.claude_prompts import VIDEO_PROMPT
-from utils import pprint_prompt
+from utils.utils import pprint_prompt
 from config import ANTHROPIC_API_KEY
 from video.utils import extract_tag_content, assemble_claude_prompt_video
 from llm import (

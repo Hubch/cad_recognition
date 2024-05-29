@@ -83,7 +83,7 @@ function App() {
     useState<boolean>(false);
 
   const wsRef = useRef<WebSocket>(null);
-
+  
   const showReactWarning =
     selectedCodeGenerationModel ===
       CodeGenerationModel.GPT_4_TURBO_2024_04_09 &&
@@ -103,6 +103,10 @@ function App() {
       }));
     }
   }, [settings.generatedCodeConfig, setSettings]);
+
+ 
+
+
 
   const takeScreenshot = async (): Promise<string> => {
     const iframeElement = document.querySelector(

@@ -6,6 +6,7 @@ from prompts.imported_code_prompts import IMPORTED_CODE_SYSTEM_PROMPTS
 from prompts.screenshot_system_prompts import SYSTEM_PROMPTS
 from prompts.match_cad_prompts import CAD_MATCH_SYSTEM_PROMPTS
 from prompts.types import Stack
+import json
 
 
 USER_PROMPT = """
@@ -106,7 +107,7 @@ def assemble_json_prompt(
             user_content.append(
                 {
                     "type": "text",
-                    "text": info,
+                    "text": json.dumps(info),
                 }
             )
             

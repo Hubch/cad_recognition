@@ -3,7 +3,8 @@ import numpy as np
 from paddleocr import PaddleOCR, draw_ocr
 import LabelMap
 import cv2
-from utils import utils 
+from utils import utils
+from utils.polt import Annotator,colors
 
 class YOLOv5ONNXPipeline:
     def __init__(self, 
@@ -32,7 +33,9 @@ class YOLOv5ONNXPipeline:
         self.half = half
         self.labels_map = LabelMap.labels_map
         self.threshold = threshold
-
+        self.ration = 0
+        self.font = "msyh.ttc"
+        self.colors = colors
         print("input_shape:", self.session.get_inputs()[0].shape)
 
     def preprocess_image(self, image):
@@ -43,7 +46,7 @@ class YOLOv5ONNXPipeline:
         # 3. 归一化像素值
         # 4. 增加一个批次维度
         # 注意：这里的尺寸和归一化参数需要根据模型进行调整
-        image = utils.letterbox(image, new_shape=self.img_size)     # 使用填充进行 resize 避免失真
+        image,self.ration = utils.letterbox(image, new_shape=self.img_size)     # 使用填充进行 resize 避免失真
         image = image[:, :, ::-1].transpose(2, 0, 1)          # BGR -> RGB & HWC -> CHW
         if self.half:
             image = np.ascontiguousarray(image).astype(np.float16)
@@ -78,7 +81,7 @@ class YOLOv5ONNXPipeline:
 
         return boxes, classIds, confidences
         
-    def postprocess_results(self, boxes, classIds, confidences):
+    def postprocess_results(self,image, boxes, classIds, confidences):
         # YOLOv5的后处理步骤通常包括：
         # 1. 解析模型输出，通常包括边界框坐标、置信度和类别
         # 2. 应用阈值来过滤低置信度的预测
@@ -87,44 +90,58 @@ class YOLOv5ONNXPipeline:
         pred_boxes = []
         pred_confes = []
         pred_classes = []
+        pred_texts = []
         if len(idxs) > 0:
             for i in idxs.flatten():
                 confidence = confidences[i]
                 if confidence >= self.threshold:
-                    pred_boxes.append(boxes[i])
+                    # 进行坐标还原
+                    box = boxes[i]
+                    left, top, right, bottom = (box[0], box[1], box[0] + box[2], box[1] + box[3])
+                    box = [left, top, right, bottom]
+                    box = np.squeeze(
+                        utils.scale_coords(self.img_size, np.expand_dims(box, axis=0).astype("float"), image.shape[:2]).round(), axis=0).astype(
+                        "int").tolist()
+                    print(f"boxes[i]:{boxes[i]},还原后：{box}")
+                    pred_boxes.append(box)
                     pred_confes.append(confidence)
                     pred_classes.append(classIds[i])
-        return pred_boxes, pred_classes, pred_confes
+                    pred_texts.append(self.labels_map[classIds[i]])
+        return pred_boxes, pred_classes, pred_confes,pred_texts
     
     def draw_image_with_bbox(self, image, boxes, classIds, confidences):
+        annotator = Annotator(image, example=str("闸阀"),font_size=12,font=self.font,pil=True)
         for i, _ in enumerate(boxes):
             box = boxes[i]
-            left, top, width, height = box[0], box[1], box[2], box[3]
-            box = (left, top, left + width, top + height)
-            box = np.squeeze(
-                utils.scale_coords(self.img_size, np.expand_dims(box, axis=0).astype("float"), image.shape[1:]).round(), axis=0).astype(
-                "int")  # 进行坐标还原
-            x0, y0, x1, y1 = box[0], box[1], box[2], box[3]
-            # 执行画图函数
-            cv2.rectangle(image, (x0, y0), (x1, y1), (0, 0, 255), thickness=self.line_thickness)
-            cv2.putText(image, '{0}--{1:.2f}'.format(self.labels_map[classIds[i]], confidences[i]), (x0, y0 - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), thickness=self.text_thickness)
-        return image
+            # left, top, right, bottom = (box[0], box[1], box[0] + box[2], box[1] + box[3])
+            # 调试输出，检查原始边界框坐标
+            className = self.labels_map.get(classIds[i], None)
+            if className is not None :
+                label = '{0}-{1:.2f}'.format(className, confidences[i])
+                color = self.colors(classIds[i], True)
+                print(f"label:{label},box:{box},color:{color}")
+                annotator.box_label(box= box, label= label, color=color,rotated = False)
+                
+        im0 = annotator.result()
+        cv2.imwrite("run/output.jpg", im0)
+        return im0
         
     def __call__(self, image):
         # 预处理图像
-        image = self.preprocess_image(image)
+        image_deal = self.preprocess_image(image.copy())
         # 推理
-        boxes, classIds, confidences = self.detect_image(image)
+        boxes, classIds, confidences = self.detect_image(image_deal)
         # 后处理
-        boxes, classIds, confidences = self.postprocess_results(boxes, classIds, confidences)
+        boxes, classIds, confidences,texts = self.postprocess_results(image,boxes, classIds, confidences)
         # 画图传回去
+        print(f"boxes:{boxes}")
         image_with_box = self.draw_image_with_bbox(image, boxes, classIds, confidences)
         image_base64_str = utils.convertBase64(image_with_box)
         result = {
             "image_with_box":image_base64_str,
             "boxes":boxes, 
             "classIds":classIds, 
+            "classtexts":texts, 
             "confidences": [round(num, 2) for num in confidences]
             }
         return result

@@ -13,12 +13,32 @@ function Preview({ code, device }: Props) {
   // Don't update code more often than every 200ms.
   const throttledCode = useThrottle(code, 200);
 
+  // useEffect(() => {
+  //   if (iframeRef.current) {
+  //     iframeRef.current.srcdoc = throttledCode;
+  //   }
+  // }, [throttledCode]);
+
   useEffect(() => {
+    const handleIframeLoad = () => {
+      if (iframeRef.current) {
+        iframeRef.current.contentWindow?.scrollTo({
+          top: iframeRef.current.contentDocument?.body.scrollHeight,
+          behavior: 'smooth'
+        });
+      }
+    };
+
     if (iframeRef.current) {
       iframeRef.current.srcdoc = throttledCode;
+      iframeRef.current.addEventListener('load', handleIframeLoad);
+      return () => {
+        iframeRef.current?.removeEventListener('load', handleIframeLoad);
+      };
     }
   }, [throttledCode]);
 
+  
   return (
     <div className="flex justify-center mx-2">
       <iframe

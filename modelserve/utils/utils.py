@@ -34,7 +34,6 @@ def convertBase64(image):
     base64_string = base64_encoded.decode('utf-8')
     return base64_string
 
-
 def letterbox(img, new_shape=640, auto=False, scaleFill=False, scaleUp=True):
     """
     python的信封图片缩放
@@ -68,7 +67,7 @@ def letterbox(img, new_shape=640, auto=False, scaleFill=False, scaleUp=True):
     top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
     left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
     img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(114, 114, 114))  # 添加边界
-    return img
+    return img,ration
 
 def clip_coords(boxes, img_shape):
     """

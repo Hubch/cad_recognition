@@ -15,13 +15,12 @@ from typing import Dict, List, cast, get_args,Union
 from prompts import assemble_json_prompt
 from datetime import datetime
 import json
-from prompts.types import Stack
-
 # from utils import pprint_prompt
 from ws.constants import APP_ERROR_WEB_SOCKET_CODE  # type: ignore
 from pydantic import BaseModel
 import httpx
-from detect_result import detect_completion
+from detect_result import detect_completion,generate_image_response
+import utils.utils as utils
 
 router = APIRouter()
 
@@ -187,14 +186,14 @@ async def recognition(websocket:WebSocket):
                     )
                     raise Exception("No Anthropic key")
 
-                completion += await stream_claude_response(
+                openai_response = await stream_claude_response(
                     prompt_messages,  # type: ignore
                     api_key=ANTHROPIC_API_KEY,
                     callback=lambda x: process_chunk(x),
                 )
                 exact_llm_version = code_generation_model
             else:
-                completion += await stream_openai_response(
+                openai_response = await stream_openai_response(
                     prompt_messages,  # type: ignore
                     api_key=openai_api_key,
                     base_url=openai_base_url,
@@ -238,36 +237,70 @@ async def recognition(websocket:WebSocket):
             )
             return await throw_error(error_message)
          # Write the messages dict into a log so that we can debug later
+        deal_data =  posts_respose(params["images"],openai_response)
+        await process_chunk(deal_data)
+        completion += openai_response
         write_logs(prompt_messages, completion)
    
     await websocket.close() 
 
 
-
-class DetectResponse(BaseModel):
-    org_image:str
-    detect_result:ObjectDetectResult
-    ocr_result:OcrDetect
-
-
 class DetectRequest(BaseModel):
     image:str
    
-class OcrDetect(BaseModel):
-    draw_image:str
-    detections:List
-    texts:List
+# class OcrDetect(BaseModel):
+#     draw_image:str
+#     detections:List
+#     texts:List
     
-class ObjectDetectResult(BaseModel):
-    image_with_box:str
-    boxes:List
-    classIds:List
-    confidences:List
+# class ObjectDetectResult(BaseModel):
+#     image_with_box:str
+#     boxes:List
+#     classIds:List
+#     confidences:List
+    
+# class DetectResponse(BaseModel):
+#     org_image:str
+#     detect_result:str
+#     ocr_result:str
 
+def posts_respose(images,message):
+    html =""
+    result = utils.extract_json_from_text(message)
+    if result :
+        base64_str_list = utils.draw_box(images,result)
+        differences = result.get("differences")
+        detail = differences.get("detail")
+        describe = differences.get("describe")
+        
+    html += generate_image_response(base64_str_list,detail,describe)
+    html += "</body></html>"
+    return html
 
+ 
 def get_data_from_result(result) -> List[Union[str, None]]:
-    pass
-    
+    prompt_data = []
+    if isinstance(result, list):  # 检查 result 是否是列表
+        for index ,itme in enumerate(result):
+            # 初始化 detect_result 和 ocr_result
+            
+            detect_result = {
+                "boxes": itme["detect_result"]["boxes"],
+                "classIds": itme["detect_result"]["classIds"],
+                "confidences": itme["detect_result"]["confidences"],
+                "classtexts":itme["detect_result"]["classtexts"]
+            }
+            ocr_result = {
+                "detections": itme["ocr_result"]["detections"],
+                "texts": itme["ocr_result"]["texts"]
+            }
+            pitem = {
+                "imageId": index,
+                "detect_result": detect_result,
+                "ocr_result": ocr_result
+            }
+            prompt_data.append(pitem)
+    return prompt_data
 
 async def modelserve(request: DetectRequest):
     api_base_url = os.environ.get("MODEL_SERVE_URL", "http://localhost:8000/caddetect")

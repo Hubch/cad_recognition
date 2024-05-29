@@ -11,7 +11,7 @@ import json
 import asyncio
 from utils.convert import CustomJSONEncoder
 
-onnx_model_path = 'models/yolov5l_cad_gpu-1.0.onnx'  # ONNX模型文件的路径
+onnx_model_path = 'models/yolov5x_cad_gpu_1.0.onnx'  # ONNX模型文件的路径
 
 import logging
 
