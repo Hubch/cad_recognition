@@ -51,6 +51,7 @@ async def stream_openai_response(
         "timeout": 600,
         "temperature": 0.0,
     }
+    print(f"messages:{messages}")
     # Add 'max_tokens' only if the model is a GPT4 vision or Turbo model
     if (
         model == Llm.GPT_4_VISION
