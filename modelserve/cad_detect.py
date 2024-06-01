@@ -1,14 +1,11 @@
 from ray import serve
 from ray.serve.handle import DeploymentHandle
-from pipeline import YOLOv5ONNXPipeline,OCRPipeline
+from pipeline import YOLOv5ONNXPipeline
 import base64   
 import cv2
 import numpy as np 
 import torch
-from PIL import Image
-from io import BytesIO
 import json
-import asyncio
 from utils.convert import CustomJSONEncoder
 
 onnx_model_path = 'models/yolov5x_cad_gpu_1.0.onnx'  # ONNX模型文件的路径
@@ -54,53 +51,22 @@ def CvConverter(base64_str:str):
     binary_data = base64.b64decode(base64_str)
     return cv2.imdecode(np.frombuffer(binary_data, np.uint8), cv2.IMREAD_COLOR)
 
-@serve.deployment
-def converterRGB(base64_str:str):
-    image_data = base64.b64decode(base64_str)
-    image = Image.open(BytesIO(image_data)).convert("RGB")
-    return image
 
-@serve.deployment
-def converter(base64_str:str):
-    image_data = base64.b64decode(base64_str)
-    image = Image.open(BytesIO(image_data)).convert("RGB")
-    img_array = np.array(image)
-    return img_array
-
-@serve.deployment(ray_actor_options={"num_cpus": 2, "num_gpus": 1},health_check_timeout_s=60,health_check_period_s=60)
-class OCRTransform:
-    def __init__(self, downloader: DeploymentHandle):
-        self.downloader = downloader
-        # 使用PaddleOCR进行OCR识别
-        self.ocr = OCRPipeline(use_angle_cls=True, lang="ch",use_gpu=False)  # 这里设置为中文识    
-
-    async def transform(self, base64_str: str) -> str:
-        image = await self.downloader.remote(base64_str)
-        results = self.ocr(image)
-        return results
-
-    async def __call__(self, base64_str: str):
-        return await self.transform(base64_str)
-
-@serve.deployment
+@serve.deployment(ray_actor_options={"num_cpus": 4, "num_gpus": 1},health_check_timeout_s=60,health_check_period_s=60)
 class CADDetect:
     def __init__(
-        self, detect_responder: DeploymentHandle, ocr_responder: DeploymentHandle
+        self, detect_responder: DeploymentHandle
     ):
         self.detect_responder = detect_responder
-        self.ocr_responder = ocr_responder
         self.logger = logging.getLogger(__name__)
     
     async def __call__(self,http_request):
         try:
             request = await http_request.json()
             image = request["image"]
-            ocr_coro = self.ocr_responder.remote(image)
-            detect_coro = self.detect_responder.remote(image)
-            ocr_result,detect_result = await asyncio.gather(ocr_coro,detect_coro)
-            response = {"org_image":image,"detect_result":detect_result,"ocr_result":ocr_result}
+            detect_result = await self.detect_responder.remote(image)
+            response = {"detect_result":detect_result}
             json_response = json.dumps(response,cls = CustomJSONEncoder)
-            self.logger.info(f"cad detect result: {json_response}")
             return  json_response
             # return response
         except Exception as e:
@@ -110,5 +76,6 @@ class CADDetect:
         
 
 objectdetect_responder = ObjectDetect.bind(CvConverter.bind())
-ocrtransform_responder = OCRTransform.bind(converter.bind())
-cad_detect = CADDetect.options(route_prefix="/caddetect").bind(objectdetect_responder, ocrtransform_responder)
+# ocrtransform_responder = OCRTransform.bind(converter.bind())
+# cad_detect = CADDetect.options(route_prefix="/caddetect").bind(objectdetect_responder, ocrtransform_responder)
+cad_detect = CADDetect.options(route_prefix="/caddetect").bind(objectdetect_responder)

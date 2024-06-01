@@ -36,6 +36,7 @@ async def stream_openai_response(
     base_url: str | None,
     callback: Callable[[str], Awaitable[None]],
     model: Llm,
+    is_callback:bool
 ) -> str:
     #client = AsyncOpenAI(api_key=api_key, base_url=base_url)
     try:
@@ -51,7 +52,6 @@ async def stream_openai_response(
         "timeout": 600,
         "temperature": 0.0,
     }
-    print(f"messages:{messages}")
     # Add 'max_tokens' only if the model is a GPT4 vision or Turbo model
     if (
         model == Llm.GPT_4_VISION
@@ -64,21 +64,24 @@ async def stream_openai_response(
         stream = await client.chat.completions.create(**params)  # type: ignore
         full_response = ""
         long_text_response = ""
-        await callback('<pre><code class="language-python">')
+        if is_callback:
+            await callback('<pre><code class="language-python">')
         async for chunk in stream:  # type: ignore
             if chunk:
                 assert isinstance(chunk, ChatCompletionChunk)
                 content = chunk.choices[0].delta.content or ""
                 full_response += content
                 long_text_response+=content
-                if len(long_text_response) > 500:
+                if is_callback & len(long_text_response) > 500 :
                     await callback(long_text_response)
                     long_text_response = ""
             else:
                  print("Empty chunk received.")
-        if long_text_response != "":
+        if is_callback & (long_text_response != ""):
+            print("TTTTTTTTTTTTTTTTTT")
             await callback(long_text_response)
-        await callback("</code></pre>")
+        if is_callback:
+            await callback("</code></pre>")
     except Exception as e:
         print(f"Error while streaming OpenAI response: {e}")
         await client.close()

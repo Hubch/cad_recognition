@@ -102,7 +102,6 @@ class YOLOv5ONNXPipeline:
                     box = np.squeeze(
                         utils.scale_coords(self.img_size, np.expand_dims(box, axis=0).astype("float"), image.shape[:2]).round(), axis=0).astype(
                         "int").tolist()
-                    print(f"boxes[i]:{boxes[i]},还原后：{box}")
                     pred_boxes.append(box)
                     pred_confes.append(confidence)
                     pred_classes.append(classIds[i])
@@ -117,10 +116,8 @@ class YOLOv5ONNXPipeline:
             # 调试输出，检查原始边界框坐标
             className = self.labels_map.get(classIds[i], None)
             if className is not None :
-                label = '{0}-{1:.2f}'.format(className, confidences[i])
                 color = self.colors(classIds[i], True)
-                print(f"label:{label},box:{box},color:{color}")
-                annotator.box_label(box= box, label= label, color=color,rotated = False)
+                annotator.box_label(box= box, label= className, color=color,rotated = False)
                 
         im0 = annotator.result()
         cv2.imwrite("run/output.jpg", im0)
@@ -134,7 +131,6 @@ class YOLOv5ONNXPipeline:
         # 后处理
         boxes, classIds, confidences,texts = self.postprocess_results(image,boxes, classIds, confidences)
         # 画图传回去
-        print(f"boxes:{boxes}")
         image_with_box = self.draw_image_with_bbox(image, boxes, classIds, confidences)
         image_base64_str = utils.convertBase64(image_with_box)
         result = {

@@ -19,8 +19,9 @@ import json
 from ws.constants import APP_ERROR_WEB_SOCKET_CODE  # type: ignore
 from pydantic import BaseModel
 import httpx
-from detect_result import detect_completion,generate_image_response
+from detect_result import detect_completion,generate_image_response,llm_emp_response,generate_org_response
 import utils.utils as utils
+from ocr import OCRPipeline
 
 router = APIRouter()
 
@@ -146,13 +147,25 @@ async def recognition(websocket:WebSocket):
             
             # request modelserve 
             detect_results = []
+            
+            if input_mode == "pdf":
+                modelserve_param = pre_data(params["images"])
+            else:
+                modelserve_param = params["images"]
+            
+            completion = generate_org_response(modelserve_param)
+            await process_chunk(completion)
             try:
-                for image in params["images"]:
+                for image in modelserve_param:
                     request = DetectRequest(image=image)
-                    detect_result = await modelserve(request)
+                    import asyncio
+                    detect_coro = modelserve(request)
+                    ocr_coro = ocr_image(image)
+                    ocr_result,detect_result = await asyncio.gather(ocr_coro,detect_coro)
+                    result = {"org_image":image,"detect_result":detect_result.get("detect_result",image),"ocr_result":ocr_result}
                     # TODO parsing result
-                    detect_results.append(detect_result)
-            except:
+                    detect_results.append(result)
+            except Exception as e:
                 await websocket.send_json(
                     {
                             "type": "error",
@@ -160,11 +173,11 @@ async def recognition(websocket:WebSocket):
                     }
                 )
                 await websocket.close()
+                print(e)
                 return
-       
             prompt_data = get_data_from_result(detect_results)
-            completion = await detect_completion(
-            process_chunk, result=detect_results)
+            # completion = await detect_completion(
+            # process_chunk, result=detect_results)
             # Assemble the prompt
             try:
                 prompt_messages = assemble_json_prompt(prompt_data, "json")
@@ -199,6 +212,7 @@ async def recognition(websocket:WebSocket):
                     base_url=openai_base_url,
                     callback=lambda x: process_chunk(x),
                     model=code_generation_model,
+                    is_callback = False
                 )
                 exact_llm_version = code_generation_model
             print("Exact used model for generation: ", exact_llm_version)
@@ -237,10 +251,10 @@ async def recognition(websocket:WebSocket):
             )
             return await throw_error(error_message)
          # Write the messages dict into a log so that we can debug later
-        deal_data =  posts_respose(params["images"],openai_response)
+        deal_data =  posts_respose(modelserve_param,openai_response)
         await process_chunk(deal_data)
-        completion += openai_response
-        write_logs(prompt_messages, completion)
+        # completion += openai_response
+        # write_logs(prompt_messages, completion)
    
     await websocket.close() 
 
@@ -263,18 +277,39 @@ class DetectRequest(BaseModel):
 #     org_image:str
 #     detect_result:str
 #     ocr_result:str
+import random
+
+def pre_data(params):
+    images_str = []
+    random_number = random.randint(0, 4) * 2
+    for index,_ in enumerate(params):
+        image_path = f"images/{random_number+index}.jpg"
+        base64_str = utils.convertBase64FromPath(image_path)
+        images_str.append(base64_str)
+    return images_str
+
+async def ocr_image(image_path):
+    ocr = OCRPipeline(use_angle_cls=True, lang="ch",use_gpu=False)  # 这里设置为中文识  
+    result = ocr(image_path) 
+    return result
 
 def posts_respose(images,message):
     html =""
     result = utils.extract_json_from_text(message)
+    base64_str_list = images
+  
     if result :
-        base64_str_list = utils.draw_box(images,result)
-        differences = result.get("differences")
-        detail = differences.get("detail")
-        describe = differences.get("describe")
-        
-    html += generate_image_response(base64_str_list,detail,describe)
-    html += "</body></html>"
+        try:
+            base64_str_list = utils.draw_box(images,result)
+            differences = result.get("differences","{}")
+            detail = differences.get("detail","[]")
+            describe = differences.get("describe","")
+            html += generate_image_response(base64_str_list,detail,describe)
+            html += "</body></html>"
+        except Exception as e:
+            print(f"{e}")
+    if html =="":
+        html = llm_emp_response()
     return html
 
  
@@ -283,7 +318,6 @@ def get_data_from_result(result) -> List[Union[str, None]]:
     if isinstance(result, list):  # 检查 result 是否是列表
         for index ,itme in enumerate(result):
             # 初始化 detect_result 和 ocr_result
-            
             detect_result = {
                 "boxes": itme["detect_result"]["boxes"],
                 "classIds": itme["detect_result"]["classIds"],
@@ -304,14 +338,18 @@ def get_data_from_result(result) -> List[Union[str, None]]:
 
 async def modelserve(request: DetectRequest):
     api_base_url = os.environ.get("MODEL_SERVE_URL", "http://localhost:8000/caddetect")
+    imagesplit = request.image.split(",")
+    image = imagesplit[0]
+    if len(imagesplit)>1:
+       image = imagesplit[1]
+     
     try:
         async with httpx.AsyncClient(timeout=60) as client:
             response = await client.post(
                 api_base_url,
-                json={"image": request.image.split(",")[1]},
+                json={"image": image},
                 timeout=20
             )
-            
             if response.status_code == 200:
                 return response.json()
             else:

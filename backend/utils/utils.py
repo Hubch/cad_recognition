@@ -8,6 +8,7 @@ from PIL import Image
 import numpy as np
 from io import BytesIO
 from utils.polt import Annotator,colors
+import os
 
 def pprint_prompt(prompt_messages: List[ChatCompletionMessageParam]):
     print(json.dumps(truncate_data_strings(prompt_messages), indent=4))
@@ -43,10 +44,10 @@ def extract_json_from_text(text):
     # 解析 JSON 字符串
     try:
         json_data = json.loads(json_str)
-        print(f"json_data:{json_data}")
         return json_data
     except json.JSONDecodeError:
-        print("无法解析 JSON 数据")
+        print(f"无法解析 JSON 数据:{json_str}")
+        return json.dumps({})
 
 
 def base64_to_pil(base64_string):
@@ -99,6 +100,7 @@ def convertBase64(image):
 
 def draw_box(images, result):
     base64_images = []
+    print(result)
     differences = result.get("differences")
     boxes = differences.get("images")
     if result:
@@ -122,3 +124,32 @@ def draw_box(images, result):
     else:
         return images
     return base64_images
+
+import fitz
+
+def pdf_to_image(pdf_path, output_path):
+    pdf_document = fitz.open(pdf_path)
+    
+    for page_num in range(pdf_document.page_count):
+        page = pdf_document.load_page(page_num)
+        image_list = page.get_pixmap()
+        
+        image_path = output_path.format(page_num)
+        image_list.save(image_path)
+    
+    pdf_document.close()
+
+def convertBase64FromPath(image_path):
+    current_directory = os.getcwd()
+    file_path = f"{current_directory}/{image_path}"
+    # 打开图片文件
+    with Image.open(file_path).convert("RGB") as img:
+        # 将图片转换为字节流
+        img_byte_arr = BytesIO()
+        img.save(img_byte_arr, format='JPEG')
+        img_byte_arr = img_byte_arr.getvalue()
+
+        # 将字节流编码为base64
+        img_base64 = base64.b64encode(img_byte_arr)
+        img_base64_str = img_base64.decode('utf-8')  # 将字节类型转换为字符串
+    return img_base64_str

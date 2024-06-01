@@ -10,7 +10,7 @@ interface Props {
   setScreenRecorderState: (state: ScreenRecorderState) => void;
   generateCode: (
     referenceImages: string[],
-    inputMode: "image" | "video"
+    inputMode: "image" | "pdf"
   ) => void;
 }
 
@@ -38,7 +38,7 @@ function ScreenRecorder({
 
       // TODO: Test across different browsers
       // Create the media recorder
-      const options = { mimeType: "video/webm" };
+      const options = { mimeType: "application/pdf" };
       const mediaRecorder = new MediaRecorder(stream, options);
       setMediaRecorder(mediaRecorder);
 
@@ -88,7 +88,7 @@ function ScreenRecorder({
 
   const kickoffGeneration = () => {
     if (screenRecordingDataUrl) {
-      generateCode([screenRecordingDataUrl], "video");
+      generateCode([screenRecordingDataUrl], "pdf");
     } else {
       toast.error("Screen recording does not exist. Please try again.");
       throw new Error("No screen recording data url");

@@ -56,25 +56,58 @@ def generate_match_response(message):
     return html
 
 
-def generate_image_response(message,detail,describe):
-    html = ""
-    plist = "<p>" + "</p><p>".join(detail) + "</p>"
-    html +=f"""
-    <h3>对比结果</h3>
-    <div class="iamge-container">
-    	<img class="responsive-image" src="data:image/png;base64,{message[0]}" >
-    	<img class="responsive-image" src="data:image/png;base64,{message[1]}">
-    </div>
-    <h3>详细区别</h3>
-    <div class ="input">{plist}</div>
-    <h3>总结</h3>
-    <div class ="input" >
-    {describe}
-    </div>
+def generate_org_response(message):
+      # Add heading
+    html = f"<html>{HEAD}<body>"
+    imageHtmls =""
+    for image in message:
+        imageHtmls += f'<img class="responsive-image" src="data:image/png;base64,{image}">'
+    html += f"""
+      <div class="iamge-container">
+        {imageHtmls}
+      </div>
     """
     return html
 
+def generate_image_response(message,detail,describe):
+    # Add heading
+    #html = f"<html>{HEAD}<body>"
+    html=""
+    if detail:
+        plist = "<p>" + "</p><p>".join(detail) + "</p>"
+    else:
+        plist ="没有差异"
+    imageHtmls =""
+    for image in message:
+        imageHtmls += f'<img class="responsive-image" src="data:image/png;base64,{image}">'
+   
+    html +=f"""
+    <h3>对比结果</h3>
+    <div class="iamge-container">
+        {imageHtmls}
+    </div>
+    <h3>详细区别</h3>
+    <div class ="input">{plist}</div>
+  
+    """
+    # html += f"""
+    #   <h3>总结</h3>
+    # <div class ="input" >
+    # {describe}
+    # </div>
+    # """
+    html += f"""<script>{JS}</script>"""
+    return html
 
+def llm_emp_response():
+    html = f"<html>{HEAD}<body>"
+    html +=f"""
+    <h3>对比失败,网络异常，大模型无响应</h3>
+    """
+    html += f"""<script>{JS}</script>"""
+    return html
+    
+    
 # class ResultInfo:
 #     org_images:list[str]
 #     detect_image:list[str]
@@ -110,9 +143,9 @@ CLASS = """
     padding: 12px;
     line-height: 24px;
     min-height: 72px;
-    max-height: 100px;
+    max-height: 400px;
     overflow: auto;
-    width:80%
+    width:100%
 }
 
 pre {

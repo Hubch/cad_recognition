@@ -50,6 +50,8 @@ function fileToDataURL(file: File) {
   });
 }
 
+
+
 type FileWithPreview = {
   preview: string;
 } & File;
@@ -57,7 +59,7 @@ type FileWithPreview = {
 interface Props {
   setReferenceImages: (
     referenceImages: string[],
-    inputMode: "image" | "video"
+    inputMode: "image" | "pdf" 
   ) => void;
 }
 
@@ -80,6 +82,8 @@ function ImageUpload({ setReferenceImages }: Props) {
         "video/quicktime": [".mov"],
         "video/mp4": [".mp4"],
         "video/webm": [".webm"],
+        // PDF format
+        "application/pdf": [".pdf"]
       },
       onDrop: (acceptedFiles) => {
         // Set up the preview thumbnail images
@@ -97,8 +101,8 @@ function ImageUpload({ setReferenceImages }: Props) {
             if (dataUrls.length > 0) {
               setReferenceImages(
                 dataUrls.map((dataUrl) => dataUrl as string),
-                (dataUrls[0] as string).startsWith("data:video")
-                  ? "video"
+                (dataUrls[0] as string).indexOf("application/pdf")>=0
+                  ? "pdf"
                   : "image"
               );
             }
@@ -168,8 +172,8 @@ function ImageUpload({ setReferenceImages }: Props) {
         <div {...getRootProps({ style: style as any })}>
           <input {...getInputProps()} />
           <p className="text-slate-700 text-lg">
-            将cad图纸图像拖拽到, <br />
-            此处或点击上传
+            将cad图拖拽到此处, <br />
+            或点击上传
           </p>
         </div>
       )}

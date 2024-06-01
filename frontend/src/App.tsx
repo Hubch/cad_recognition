@@ -47,7 +47,7 @@ function App() {
   const [appState, setAppState] = useState<AppState>(AppState.INITIAL);
   const [generatedCode, setGeneratedCode] = useState<string>("");
 
-  const [inputMode, setInputMode] = useState<"image" | "video">("image");
+  const [inputMode, setInputMode] = useState<"image" | "pdf">("image");
 
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const [executionConsole, setExecutionConsole] = useState<string[]>([]);
@@ -176,7 +176,7 @@ function App() {
   };
 
   const previewCode =
-    inputMode === "video" && appState === AppState.CODING
+    inputMode === "pdf" && appState === AppState.CODING
       ? extractHtml(generatedCode)
       : generatedCode;
 
@@ -259,7 +259,7 @@ function App() {
   }
 
   // Initial version creation
-  function doCreate(referenceImages: string[], inputMode: "image" | "video") {
+  function doCreate(referenceImages: string[], inputMode: "image" | "pdf") {
     // Reset any existing state
     reset();
 
@@ -425,12 +425,12 @@ function App() {
               {appState === AppState.CODING && (
                 <div className="flex flex-col">
                   {/* Speed disclaimer for video mode */}
-                  {inputMode === "video" && (
+                  {inputMode === "pdf" && (
                     <div
                       className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700
                     p-2 text-xs mb-4 mt-1"
                     >
-                      Code generation from videos can take 3-4 minutes. We do
+                      Code generation from pdf can take 3-4 minutes. We do
                       multiple passes to get the best result. Please be patient.
                     </div>
                   )}
@@ -508,19 +508,17 @@ function App() {
                             alt={`Reference ${index + 1}`}
                           />
                         )}
-                        {inputMode === "video" && (
-                          <video
-                            muted
-                            autoPlay
-                            loop
+                        {inputMode === "pdf" && (
+                          <img
                             className="w-[340px] border border-gray-200 rounded-md"
-                            src={image}
+                            src={`/input/${index}.jpeg`}
+                            alt={`Reference ${index + 1}`}
                           />
                         )}
                       </div>
                       <div className="text-gray-400 uppercase text-sm text-center mt-1">
-                        {inputMode === "video"
-                          ? "原始视频"
+                        {inputMode === "pdf"
+                          ? "原始文件"
                           : `原始图片${index + 1}`}
                       </div>
                     </div>
