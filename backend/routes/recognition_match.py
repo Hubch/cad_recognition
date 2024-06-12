@@ -45,8 +45,8 @@ def write_logs(prompt_messages: List[ChatCompletionMessageParam], completion: st
 
     filename = f"{logs_directory}/{json_file_name}.json"
     # Write the messages dict into a new file for each run
-    with open(filename, "w") as f:
-        f.write(json.dumps({"prompt": prompt_messages, "completion": completion}))
+    with open(filename, "w",encoding='utf-8') as f:
+        f.write(json.dumps({"prompt": prompt_messages, "completion": completion},ensure_ascii=False))
 
 
 def checkfile(json_file_name:str):
