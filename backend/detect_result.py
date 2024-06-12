@@ -59,14 +59,14 @@ def generate_match_response(message):
 def generate_org_response(message):
       # Add heading
     html = f"<html>{HEAD}<body>"
-    imageHtmls =""
-    for image in message:
-        imageHtmls += f'<img class="responsive-image" src="data:image/png;base64,{image}">'
-    html += f"""
-      <div class="iamge-container">
-        {imageHtmls}
-      </div>
-    """
+    # imageHtmls =""
+    # for image in message:
+    #     imageHtmls += f'<img class="responsive-image" src="data:image/png;base64,{image}">'
+    # html += f"""
+    #   <div class="iamge-container">
+    #     {imageHtmls}
+    #   </div>
+    # """
     return html
 
 def generate_image_response(message,detail):

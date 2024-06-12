@@ -5,7 +5,7 @@ const CODING_SETTINGS = {
   favicon: "/favicon/coding.png",
 };
 const DEFAULT_SETTINGS = {
-  title: "CAD 识别匹配系统",
+  title: "AI 审图系统",
   favicon: "/favicon/main.png",
 };
 

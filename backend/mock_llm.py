@@ -4,17 +4,19 @@ from typing import Awaitable, Callable
 from custom_types import InputMode
 
 
-STREAM_CHUNK_SIZE = 20
+STREAM_CHUNK_SIZE = 500
 
 
 async def mock_completion(
-    process_chunk: Callable[[str], Awaitable[None]], input_mode: InputMode
+    process_chunk: Callable[[str], Awaitable[None]], input_mode: InputMode,
+    images,file_index
 ) -> str:
     code_to_return = (
         MOCK_RESULT
         if input_mode == "video"
         else MOCK_RESULT
     )
+    code_to_return = get_json_completion(file_index,images)
 
     for i in range(0, len(code_to_return), STREAM_CHUNK_SIZE):
         await process_chunk(code_to_return[i : i + STREAM_CHUNK_SIZE])
@@ -31,6 +33,23 @@ async def mock_completion(
             code_to_return = "Error: HTML block not found."
 
     return code_to_return
+
+import os
+import json
+from routes.recognition_match import posts_respose
+from detect_result import generate_org_response
+
+def get_json_completion(fileindex, images) -> str:
+  html =generate_org_response(images)
+  path_str = "run_logs"
+  file_name = f"{fileindex}.json"
+  file_path = os.path.join(path_str,file_name)
+  with open(file_path, 'r', encoding='utf-8') as file:
+    data = json.load(file)
+    completion = data["completion"]
+    html += posts_respose(images, completion,None)
+  
+  return html
 
 
 

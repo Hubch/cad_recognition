@@ -380,7 +380,8 @@ function App() {
       <div className="lg:fixed lg:inset-y-0 lg:z-40 lg:flex lg:w-96 lg:flex-col">
         <div className="flex grow flex-col gap-y-2 overflow-y-auto border-r border-gray-200 bg-white px-6 dark:bg-zinc-950 dark:text-white">
           <div className="flex items-center justify-between mt-10 mb-2">
-            <h1 className="text-2xl ">CAD 识别系统</h1>
+            {/* <div className={classNames("gif")}></div> */}
+            <h1 className=" text-2xl text-purple-500">清北智能-AI 审图系统</h1>
             <SettingsDialog settings={settings} setSettings={setSettings} />
           </div>
 
@@ -627,6 +628,11 @@ function App() {
           </div>
         )}
       </main>
+      <footer className="mt-12 mb-4 text-center">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Copyright © 2024 清北智能, Inc.
+        </p>
+      </footer>
     </div>
   );
 }

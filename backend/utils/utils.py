@@ -164,6 +164,94 @@ def draw_box_right(images, result,input_mode):
     return base64_images
 
 
+json_result ="""
+{
+    "element": [
+      {
+        "label_0": "闸阀",
+        "label_1": "球阀",
+        "bbox_0": [],
+        "bbox_1": [],
+        "difference": "类型不同"
+      },
+      {
+        "label_0": "法兰",
+        "label_1": "无",
+        "bbox_0": [],
+        "bbox_1": [],
+        "difference": "图2中无法兰"
+      },
+    "text": [
+      {
+        "bbox_0": [],
+        "bbox_1": [],
+        "text_0": "碱液界区闽组附近",
+        "text_1": "碱液界区闻组附近碱液附近",
+        "difference": "图1文本为碱液界区闽组附近，图2文本为碱液界区闻组附近碱液附近"
+      },
+    }
+"""
+
+def draw_box_right_t(images, result, input_mode):
+    base64_images = []
+    differences = result["element"]
+    texts = result["text"]
+    print(differences)
+    differences_text = []
+    index_tag = 1
+    if result:
+        if differences:
+            image_base64_0 = images[0]
+            image_pil_0 = base64_to_pil(image_base64_0)
+            image_pil_0 = np.ascontiguousarray(image_pil_0)
+            annotator_0 = Annotator(image_pil_0, example=str(
+                "闸阀"), font_size=12, font="msyh.ttc", pil=True)
+            color = colors(1, True)
+            image_base64_1 = images[1]
+            image_pil_1 = base64_to_pil(image_base64_1)
+            image_pil_1 = np.ascontiguousarray(image_pil_1)
+            annotator_1 = Annotator(image_pil_1, example=str(
+                "闸阀"), font_size=12, font="msyh.ttc", pil=True)
+            color = colors(1, True)
+            for item in differences :
+                bbox_1 = item["bbox_1"]
+                bbox_0 = item["bbox_0"]
+                if len(bbox_0) !=0:
+                    annotator_0.box_label(box=bbox_0, label=f"[{index_tag}]",
+                                        color=color, rotated=False)
+                if len(bbox_1) !=0:
+                    annotator_1.box_label(box=bbox_1, label=f"[{index_tag}]",
+                                        color=color, rotated=False)
+                difference = item["difference"]
+                differences_text.append(f"[{index_tag}]:{difference}")
+                index_tag += 1
+        if texts:
+            for item in texts:
+                bbox_0 = item["bbox_0"]
+                bbox_1 = item["bbox_1"]
+                if len(bbox_0) != 0:
+                    annotator_0.box_label(box=bbox_0, label=f"[{index_tag}]",
+                                        color=color, rotated=False)
+                if len(bbox_1) != 0:
+                    annotator_1.box_label(box=bbox_1, label=f"[{index_tag}]",
+                                        color=color, rotated=False)
+                difference = item["difference"]
+                differences_text.append(f"[{index_tag}]:{difference}")
+                index_tag += 1
+            # 将图像转换回PIL格式
+        image_pil_1 = annotator_1.result()
+        image_pil_0 = annotator_0.result()
+        # 将图像转换为base64字符串
+        base64_image_1 = convertBase64(image_pil_1)
+        base64_image_0 = convertBase64(image_pil_0)
+        base64_images.append(base64_image_0)
+        base64_images.append(base64_image_1)
+
+    else:
+        return images, differences_text
+    return base64_images, differences_text
+
+
 def filter_boxes(boxes):
     defulat=[{"bbox": [702.0, 121.0, 714.0, 195.0], "ocr": "50-SW-3005-A1X-N"},
     {"bbox": [748.0, 112.0, 762.0, 191.0], "ocr": "50-SW-3006-A1X-N"}, 

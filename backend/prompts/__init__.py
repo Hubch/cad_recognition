@@ -84,7 +84,7 @@ def assemble_prompt(
 
 
 JSON_USER_PROMPT = """
-Please correctly compare and analyse the entered information of the recognised pictures.
+你是一个CAD审图专家，可以通过对比两个结构化元件信息找出元件和文本的差异。
 """
 
 def assemble_json_prompt(

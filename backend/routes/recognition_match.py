@@ -22,11 +22,13 @@ import httpx
 from detect_result import detect_completion,generate_image_response,llm_emp_response,generate_org_response
 import utils.utils as utils
 from ocr import OCRPipeline
+import hashlib
+
 
 router = APIRouter()
 
 
-def write_logs(prompt_messages: List[ChatCompletionMessageParam], completion: str):
+def write_logs(prompt_messages: List[ChatCompletionMessageParam], completion: str,json_file_name:str):
     # Get the logs path from environment, default to the current working directory
     logs_path = os.environ.get("LOGS_PATH", os.getcwd())
 
@@ -38,12 +40,32 @@ def write_logs(prompt_messages: List[ChatCompletionMessageParam], completion: st
     print("Writing to logs directory:", logs_directory)
 
     # Generate a unique filename using the current timestamp within the logs directory
-    filename = datetime.now().strftime(f"{logs_directory}/messages_%Y%m%d_%H%M%S.json")
+    filename = datetime.now().strftime(
+        f"{logs_directory}/{json_file_name}.json")
 
+    filename = f"{logs_directory}/{json_file_name}.json"
     # Write the messages dict into a new file for each run
     with open(filename, "w") as f:
         f.write(json.dumps({"prompt": prompt_messages, "completion": completion}))
 
+
+def checkfile(json_file_name:str):
+    logs_path = os.environ.get("LOGS_PATH", os.getcwd())
+
+    # Create run_logs directory if it doesn't exist within the specified logs path
+    logs_directory = os.path.join(logs_path, "run_logs")
+    filename = f"{logs_directory}/{json_file_name}.json"
+    return os.path.isfile(filename)
+
+
+def get_hash(encoded_string:str):
+    # 创建sha256哈希对象
+    hash_object = hashlib.sha256()
+    # 使用编码后的字节数据更新哈希对象
+    hash_object.update(encoded_string.encode("utf-8"))
+    # 获取十六进制格式的哈希值，并将其转换为字符串
+    json_file_name = hash_object.hexdigest()
+    return json_file_name
 
 @router.websocket("/recognition")
 async def recognition(websocket:WebSocket):
@@ -76,12 +98,21 @@ async def recognition(websocket:WebSocket):
         await websocket.send_json({"type": "chunk", "value": content})
 
     # pprint_prompt(prompt_messages)  # type: ignore
-    
-    if SHOULD_MOCK_AI_RESPONSE:
-        print("SHOULD_MOCK_AI_RESPONSE:",SHOULD_MOCK_AI_RESPONSE)
+    SHOULD_MOCK_AI_RESPONSE = True
+    json_file_name = ""
+    if input_mode == "pdf":
+        modelserve_param = pre_data(params["images"])
+    else:
+        modelserve_param = base64_filter(params["images"])
+   
+    json_file_name = get_hash(modelserve_param[0][-10:])
+    print(f"json_file_name:{json_file_name}")
+    isOld = checkfile(json_file_name)
+    print(f"isOld:{isOld}")
+    if SHOULD_MOCK_AI_RESPONSE & isOld:
+       
         completion = await mock_completion(
-            process_chunk, input_mode=validated_input_mode
-        )
+            process_chunk, input_mode=validated_input_mode, images=modelserve_param, file_index=json_file_name)  # type: ignore
     else:
         try:   
             # Read the code config settings from the request. Fall back to default if not provided.
@@ -176,7 +207,7 @@ async def recognition(websocket:WebSocket):
                 print(e)
                 return
             prompt_data = get_data_from_result(detect_results)
-            # completion = await detect_completion(
+            #completion = await detect_completion(
             # process_chunk, result=detect_results)
             # Assemble the prompt
             try:
@@ -253,8 +284,8 @@ async def recognition(websocket:WebSocket):
          # Write the messages dict into a log so that we can debug later
         deal_data =  posts_respose(modelserve_param,openai_response,input_mode)
         await process_chunk(deal_data)
-        completion += openai_response
-        write_logs(prompt_messages, completion)
+        completion = openai_response
+        write_logs(prompt_messages, completion,json_file_name)
    
     await websocket.close() 
 
@@ -307,17 +338,17 @@ def base64_filter(images):
         base64_images.append(image)
     return base64_images
 
-def posts_respose(images,message,input_mode):
+
+def posts_respose(images, message, input_mode):  # type: ignore
     html =""
     result = utils.extract_json_from_text(message)
     base64_str_list = images
   
     if result :
         try:
-            base64_str_list = utils.draw_box_right(images,result,input_mode)
-            differences = result.get("differences","{}")
-            detail = differences.get("detail","[]")
-            html += generate_image_response(base64_str_list,detail)
+            base64_str_list, differences_text = utils.draw_box_right_t(
+                images, result, input_mode)  # type: ignore
+            html += generate_image_response(base64_str_list, differences_text)
             html += "</body></html>"
         except Exception as e:
             print(f"{e}")
