@@ -9,7 +9,7 @@ Run the backend (I use Poetry for package management - `pip install poetry` if y
 ```bash
 cd backend
 echo "OPENAI_API_KEY=sk-your-key" > .env
-poetry install
+poetry install 
 poetry shell
 poetry run uvicorn main:app --reload --port 8001 
 ```
