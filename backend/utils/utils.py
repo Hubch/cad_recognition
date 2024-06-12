@@ -205,22 +205,22 @@ def draw_box_right_t(images, result, input_mode):
             image_pil_0 = base64_to_pil(image_base64_0)
             image_pil_0 = np.ascontiguousarray(image_pil_0)
             annotator_0 = Annotator(image_pil_0, example=str(
-                "闸阀"), font_size=12, font="msyh.ttc", pil=True)
+                "闸阀"), font_size=24, font="msyh.ttc", pil=True)
             color = colors(1, True)
             image_base64_1 = images[1]
             image_pil_1 = base64_to_pil(image_base64_1)
             image_pil_1 = np.ascontiguousarray(image_pil_1)
             annotator_1 = Annotator(image_pil_1, example=str(
-                "闸阀"), font_size=12, font="msyh.ttc", pil=True)
+                "闸阀"), font_size=24, font="msyh.ttc", pil=True)
             color = colors(1, True)
             for item in differences :
                 bbox_1 = item["bbox_1"]
                 bbox_0 = item["bbox_0"]
                 if len(bbox_0) !=0:
-                    annotator_0.box_label(box=bbox_0, label=f"[{index_tag}]",
+                    annotator_0.box_label(box=bbox_0, label=f"{index_tag}",
                                         color=color, rotated=False)
                 if len(bbox_1) !=0:
-                    annotator_1.box_label(box=bbox_1, label=f"[{index_tag}]",
+                    annotator_1.box_label(box=bbox_1, label=f"{index_tag}",
                                         color=color, rotated=False)
                 difference = item["difference"]
                 differences_text.append(f"[{index_tag}]:{difference}")
@@ -230,10 +230,10 @@ def draw_box_right_t(images, result, input_mode):
                 bbox_0 = item["bbox_0"]
                 bbox_1 = item["bbox_1"]
                 if len(bbox_0) != 0:
-                    annotator_0.box_label(box=bbox_0, label=f"[{index_tag}]",
+                    annotator_0.box_label(box=bbox_0, label=f"{index_tag}",
                                         color=color, rotated=False)
                 if len(bbox_1) != 0:
-                    annotator_1.box_label(box=bbox_1, label=f"[{index_tag}]",
+                    annotator_1.box_label(box=bbox_1, label=f"{index_tag}",
                                         color=color, rotated=False)
                 difference = item["difference"]
                 differences_text.append(f"[{index_tag}]:{difference}")

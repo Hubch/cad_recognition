@@ -381,7 +381,8 @@ function App() {
         <div className="flex grow flex-col gap-y-2 overflow-y-auto border-r border-gray-200 bg-white px-6 dark:bg-zinc-950 dark:text-white">
           <div className="flex items-center justify-between mt-10 mb-2">
             {/* <div className={classNames("gif")}></div> */}
-            <h1 className=" text-2xl text-purple-500">清北智能-AI 审图系统</h1>
+            <h1 className=" text-2xl text-purple-500">清北智能</h1>
+            <h1 className=" text-2xl">AI 审图系统</h1>
             <SettingsDialog settings={settings} setSettings={setSettings} />
           </div>
 
