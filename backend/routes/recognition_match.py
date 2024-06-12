@@ -151,7 +151,7 @@ async def recognition(websocket:WebSocket):
             if input_mode == "pdf":
                 modelserve_param = pre_data(params["images"])
             else:
-                modelserve_param = params["images"]
+                modelserve_param = base64_filter(params["images"])
             
             completion = generate_org_response(modelserve_param)
             await process_chunk(completion)
@@ -191,7 +191,7 @@ async def recognition(websocket:WebSocket):
                 await websocket.close()
                 return
             
-               
+            print(f"prompt_messages:{prompt_messages}")
             if code_generation_model == Llm.CLAUDE_3_SONNET:
                 if not ANTHROPIC_API_KEY:
                     await throw_error(
@@ -251,10 +251,10 @@ async def recognition(websocket:WebSocket):
             )
             return await throw_error(error_message)
          # Write the messages dict into a log so that we can debug later
-        deal_data =  posts_respose(modelserve_param,openai_response)
+        deal_data =  posts_respose(modelserve_param,openai_response,input_mode)
         await process_chunk(deal_data)
-        # completion += openai_response
-        # write_logs(prompt_messages, completion)
+        completion += openai_response
+        write_logs(prompt_messages, completion)
    
     await websocket.close() 
 
@@ -281,30 +281,43 @@ import random
 
 def pre_data(params):
     images_str = []
-    random_number = random.randint(0, 4) * 2
+    random_num = 0 #random.randint(0,4)*2
     for index,_ in enumerate(params):
-        image_path = f"images/{random_number+index}.jpg"
+        image_path = f"images/{random_num+index}.jpg"
         base64_str = utils.convertBase64FromPath(image_path)
         images_str.append(base64_str)
     return images_str
 
 async def ocr_image(image_path):
+    imagesplit = image_path.split(",")
+    image = imagesplit[0]
+    if len(imagesplit)>1:
+       image = imagesplit[1]
     ocr = OCRPipeline(use_angle_cls=True, lang="ch",use_gpu=False)  # 这里设置为中文识  
-    result = ocr(image_path) 
+    result = ocr(image) 
     return result
 
-def posts_respose(images,message):
+def base64_filter(images):
+    base64_images = []
+    for image in images:
+        imagesplit = image.split(",")
+        image = imagesplit[0]
+        if len(imagesplit)>1:
+            image = imagesplit[1]
+        base64_images.append(image)
+    return base64_images
+
+def posts_respose(images,message,input_mode):
     html =""
     result = utils.extract_json_from_text(message)
     base64_str_list = images
   
     if result :
         try:
-            base64_str_list = utils.draw_box(images,result)
+            base64_str_list = utils.draw_box_right(images,result,input_mode)
             differences = result.get("differences","{}")
             detail = differences.get("detail","[]")
-            describe = differences.get("describe","")
-            html += generate_image_response(base64_str_list,detail,describe)
+            html += generate_image_response(base64_str_list,detail)
             html += "</body></html>"
         except Exception as e:
             print(f"{e}")
@@ -319,10 +332,7 @@ def get_data_from_result(result) -> List[Union[str, None]]:
         for index ,itme in enumerate(result):
             # 初始化 detect_result 和 ocr_result
             detect_result = {
-                "boxes": itme["detect_result"]["boxes"],
-                "classIds": itme["detect_result"]["classIds"],
-                "confidences": itme["detect_result"]["confidences"],
-                "classtexts":itme["detect_result"]["classtexts"]
+                "detection": itme["detect_result"]["detection"]
             }
             ocr_result = {
                 "detections": itme["ocr_result"]["detections"],

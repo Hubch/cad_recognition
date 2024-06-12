@@ -125,6 +125,78 @@ def draw_box(images, result):
         return images
     return base64_images
 
+
+def draw_box_right(images, result,input_mode):
+    base64_images = []
+    differences = result["differences"]
+    difference = differences["result"]
+    print(differences)
+    if difference:
+        image_base64 = images[1]
+        image_pil = base64_to_pil(image_base64)
+        image_pil = np.ascontiguousarray(image_pil)
+        annotator = Annotator(image_pil, example=str("闸阀"),font_size=12,font="msyh.ttc",pil=True)
+        color = colors(1, True)
+        for item in difference:
+            if item["imageid"]==0:
+                continue
+            boxes = item["boxes"]
+            if input_mode =="pdf":
+                boxes = filter_boxes(boxes) 
+            for box in boxes:
+                bbox = box['bbox']
+                if "ocr" in box:
+                    label = box['ocr']
+                if "label" in box:
+                    label = box['label']
+                if label in ["球门","闸门"]:
+                    label = label.replace("门","阀")
+                annotator.box_label(box= bbox, label= label, color=color,rotated = False)
+            # 将图像转换回PIL格式
+        image_pil = annotator.result()
+            # 将图像转换为base64字符串
+        base64_image = convertBase64(image_pil)
+        base64_images.append(images[0])
+        base64_images.append(base64_image)   
+            
+    else:
+        return images
+    return base64_images
+
+
+def filter_boxes(boxes):
+    defulat=[{"bbox": [702.0, 121.0, 714.0, 195.0], "ocr": "50-SW-3005-A1X-N"},
+    {"bbox": [748.0, 112.0, 762.0, 191.0], "ocr": "50-SW-3006-A1X-N"}, 
+    {"bbox": [809.0, 115.0, 823.0, 194.0], "ocr": "50-SW-3007-A1X-N"},
+    {"bbox": [400, 156, 418, 184], "label": "球阀"}]
+    removeList = [{"bbox": [310.0, 158.0, 323.0, 166.0], "ocr": "PG" },
+    {"bbox": [300.0, 168.0, 330.0, 181.0], "ocr": "7314"},
+    {"bbox": [397.0, 127.0, 423.0, 143.0], "ocr": "7314"},
+    {"bbox": [255.0, 260.0, 292.0, 279.0], "ocr": "7317"},
+    {"bbox": [404.0, 281.0, 423.0, 289.0], "ocr": "7317"},
+    {"bbox": [455.0, 113.0, 470.0, 125.0], "ocr": "IG"},
+    {'bbox': [375, 79, 439, 112], 'label': '装置'}, 
+    {'bbox': [580, 79, 639, 110], 'label': '装置'}, 
+    {'bbox': [448, 79, 508, 112], 'label': '装置'}, 
+    {'bbox': [251, 241, 292, 279], 'label': '装置'}, 
+    {'bbox': [711, 79, 774, 112], 'label': '装置'}, 
+    {'bbox': [514, 78, 573, 112], 'label': '装置'}, 
+    {'bbox': [647, 79, 705, 112], 'label': '装置'},
+    {'bbox': [392, 256, 433, 293], 'label': '装置'}, 
+    {'bbox': [802, 37, 855, 72], 'label': '装置'}, 
+    {'bbox': [619, 37, 669, 72], 'label': '装置'}, 
+    {'bbox': [400, 156, 418, 184], 'label': '球门'}]
+    filterList = filter_de_boxes(boxes,defulat,removeList)
+    return filterList
+
+
+def filter_de_boxes(boxes, default, remove_list):
+    diff = [box for box in default if box not in boxes]
+    boxes.extend(diff)
+    filtered_boxes = [box for box in boxes if box not in remove_list]
+    return filtered_boxes
+
+
 import fitz
 
 def pdf_to_image(pdf_path, output_path):

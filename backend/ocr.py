@@ -4,6 +4,8 @@ from utils import utils
 import base64
 from PIL import Image
 from io import BytesIO
+import os
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
 class OCRPipeline:
     def __init__(self,use_angle_cls=True, lang="ch",use_gpu=True):
@@ -22,10 +24,10 @@ class OCRPipeline:
 
     def postprocess_results(self,original_image,result):
 
-        draw_image = self.draw_text_on_white_image(original_image,result)
+        #draw_image = self.draw_text_on_white_image(original_image,result)
         # 准备JSON格式的数据结构
         ocr_results = {
-            "draw_image":utils.convertBase64(draw_image),
+            "draw_image":"utils.convertBase64(draw_image)",
             "detections": [],
             "texts":[line[1][0] for line in result]
         }
@@ -33,8 +35,9 @@ class OCRPipeline:
         # 遍历PaddleOCR的输出结果
         for line in result:
             # line格式为[[[x_min, y_min, x_max, y_max],(text, confidence)]]
+            bbox = [[line[0]][0][0],[line[0]][0][1],[line[0]][0][2],[line[0]][0][3]]
             ocr_results["detections"].append({
-                "bbox": [[line[0]][0][0],[line[0]][0][1],[line[0]][0][2],[line[0]][0][3]], # 坐标
+                "bbox": tranXyxy(bbox), # 坐标
                 "text": [line[1]][0][0],  # 文本内容
                 "confidence": [line[1]][0][1]  # 置信度
             })
@@ -54,3 +57,10 @@ class OCRPipeline:
         detections= self.postprocess_results(image_deal,results[0])
         return detections
 
+def tranXyxy(bbox):
+    # 转换成 xyxy 格式
+    x_min = min(bbox[0][0], bbox[1][0], bbox[2][0], bbox[3][0])
+    y_min = min(bbox[0][1], bbox[1][1], bbox[2][1], bbox[3][1])
+    x_max = max(bbox[0][0], bbox[1][0], bbox[2][0], bbox[3][0])
+    y_max = max(bbox[0][1], bbox[1][1], bbox[2][1], bbox[3][1])
+    return [x_min, y_min, x_max, y_max]    

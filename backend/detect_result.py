@@ -69,7 +69,7 @@ def generate_org_response(message):
     """
     return html
 
-def generate_image_response(message,detail,describe):
+def generate_image_response(message,detail):
     # Add heading
     #html = f"<html>{HEAD}<body>"
     html=""

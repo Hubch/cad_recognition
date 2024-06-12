@@ -91,6 +91,9 @@ class YOLOv5ONNXPipeline:
         pred_confes = []
         pred_classes = []
         pred_texts = []
+        #detection = [{"bbox":[],"lable":"","confidence":0.9}]
+        detection = []
+        
         if len(idxs) > 0:
             for i in idxs.flatten():
                 confidence = confidences[i]
@@ -106,7 +109,13 @@ class YOLOv5ONNXPipeline:
                     pred_confes.append(confidence)
                     pred_classes.append(classIds[i])
                     pred_texts.append(self.labels_map[classIds[i]])
-        return pred_boxes, pred_classes, pred_confes,pred_texts
+                    detection_item = {}
+                    detection_item["bbox"] = box
+                    detection_item["label"] = self.labels_map[classIds[i]]
+                    detection_item["confidence"] = confidence
+                    detection.append(detection_item)
+
+        return pred_boxes, pred_classes, pred_confes,pred_texts,detection
     
     def draw_image_with_bbox(self, image, boxes, classIds, confidences):
         annotator = Annotator(image, example=str("闸阀"),font_size=12,font=self.font,pil=True)
@@ -129,16 +138,18 @@ class YOLOv5ONNXPipeline:
         # 推理
         boxes, classIds, confidences = self.detect_image(image_deal)
         # 后处理
-        boxes, classIds, confidences,texts = self.postprocess_results(image,boxes, classIds, confidences)
+        boxes, classIds, confidences,texts,detection = self.postprocess_results(image,boxes, classIds, confidences)
         # 画图传回去
-        image_with_box = self.draw_image_with_bbox(image, boxes, classIds, confidences)
-        image_base64_str = utils.convertBase64(image_with_box)
+        # image_with_box = self.draw_image_with_bbox(image, boxes, classIds, confidences)
+        # image_base64_str = utils.convertBase64(image_with_box)
+        #detection = [{"bbox":[],"lable":"","confidence":0.9}]
         result = {
-            "image_with_box":image_base64_str,
+            "image_with_box":"image_base64_str",
             "boxes":boxes, 
             "classIds":classIds, 
             "classtexts":texts, 
-            "confidences": [round(num, 2) for num in confidences]
+            "confidences": [round(num, 2) for num in confidences],
+            "detection":detection
             }
         return result
 
