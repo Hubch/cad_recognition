@@ -35,3 +35,5 @@ modelserve/run/*
 
 *.pyc
 *.onnx
+**/*teacher*
+det_matrices/weights/*teacher*
