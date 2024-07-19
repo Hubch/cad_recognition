@@ -395,10 +395,8 @@ def main():
         final_boxes = global_boxes[indices]
         bbox_results.append(final_boxes)
 
-        # 在原图上绘制检测结果
         draw_bboxes(image, final_boxes)
         
-        # 保存结果图像
         result_image = Image.fromarray(image)
         result_image.save(f'./outputs/{pdf_name}_detected.png')
     
