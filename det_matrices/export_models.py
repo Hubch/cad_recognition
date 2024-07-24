@@ -45,9 +45,9 @@ if __name__ == '__main__':
             verbose=True,
             opset_version=12,
             input_names=["inputs"],
-            output_names=["output0"],
+            output_names=["output"],
             dynamic_axes={"inputs": {0: "batch", 2: "height", 3: "width"},
-                        "output0": {0: "batch", 1: "anchors"}}
+                        "output": {0: "batch", 1: "anchors"}}
         )
 
         # model check

@@ -5,13 +5,17 @@ import LabelMap
 import cv2
 from utils import utils
 from utils.polt import Annotator,colors
+import fitz  # PyMuPDF
 
-class YOLOv5ONNXPipeline:
+class CADMatchingPipeline:
     def __init__(self, 
-                 onnx_model_path, 
+                 detect_model_path,
+                 match_model_path,
+                 threshold_path,
+                 class_to_idx_path,
                  img_size=640, 
-                 conf_thres=0.25, 
-                 iou_thres=0.45, 
+                 conf_thres=0.4, 
+                 iou_thres=0.1, 
                  stride=1,
                  line_thickness=2, 
                  text_thickness=1,
@@ -19,9 +23,25 @@ class YOLOv5ONNXPipeline:
                  hide_conf=True,
                  half=False,
                  threshold = 0.2):
-        # 初始化ONNX运行时会话
-        self.session = onnxruntime.InferenceSession(onnx_model_path)
-        self.input_name = self.session.get_inputs()[0].name
+        
+        # Load the first ONNX model
+        self.detect_session = onnxruntime.InferenceSession(detect_model_path)
+        self.detect_input_name = self.detect_session.get_inputs()[0].name
+        self.detect_output_name = self.detect_session.get_outputs()[0].name
+
+        # Load the second ONNX model
+        self.match_session = onnxruntime.InferenceSession(match_model_path)
+        self.match_input_name = self.match_session.get_inputs()[0].name
+        self.match_output_feature = self.match_session.get_outputs()[0].name
+        self.match_output_logits = self.match_session.get_outputs()[1].name
+
+        with open(class_to_idx_path, 'r') as f:
+            self.class_to_idx = json.load(f)
+        self.idx_to_class = {idx: cls_name for cls_name, idx in class_to_idx.items()}
+        self.threshold_path = threshold_path
+        self.window_size = (640, 640)
+        self.step_size = 480
+
         self.img_size = img_size
         self.conf_thres = conf_thres
         self.iou_thres = iou_thres
@@ -36,27 +56,78 @@ class YOLOv5ONNXPipeline:
         self.ration = 0
         self.font = "msyh.ttc"
         self.colors = colors
-        print("input_shape:", self.session.get_inputs()[0].shape)
 
-    def preprocess_image(self, image):
-        # YOLOv5的预处理步骤通常包括：
-        # 0. image: cv2 image with HWC and BGR
-        # 1. 将图像调整到模型期望的尺寸
-        # 2. 将PIL图像转换为NumPy数组
-        # 3. 归一化像素值
-        # 4. 增加一个批次维度
-        # 注意：这里的尺寸和归一化参数需要根据模型进行调整
-        image,self.ration = utils.letterbox(image, new_shape=self.img_size)     # 使用填充进行 resize 避免失真
-        image = image[:, :, ::-1].transpose(2, 0, 1)          # BGR -> RGB & HWC -> CHW
-        if self.half:
-            image = np.ascontiguousarray(image).astype(np.float16)
-        else :
-            image = np.ascontiguousarray(image).astype(np.float32)
-        image /= 255.0
-        image = np.expand_dims(image, axis=0)
-        assert len(image.shape) == 4
-      
-        return image
+    def convert_pdf_to_images(self, pdf_path, dpi=300):
+        doc = fitz.open(pdf_path)
+        images = []
+        for page_num in range(len(doc)):   # assert there are multi-pages included, though there is always one
+            page = doc.load_page(page_num)
+            mat = fitz.Matrix(dpi / 72, dpi / 72)  
+            pix = page.get_pixmap(matrix=mat)  
+            img = Image.open(io.BytesIO(pix.tobytes()))
+            images.append(img)
+        return images
+    
+    def resize_to_same_height(self, image1, image2):
+        h1, w1 = image1.shape[:2]
+        h2, w2 = image2.shape[:2]
+        
+        if h1 > h2:
+            new_w2 = int(w2 * (h1 / h2))
+            image2_resized = cv2.resize(image2, (new_w2, h1))
+            return image1, image2_resized
+        else:
+            new_w1 = int(w1 * (h2 / h1))
+            image1_resized = cv2.resize(image1, (new_w1, h2))
+            return image1_resized, image2
+        
+    
+    def sliding_window(self, image, step_size, window_size):
+        for y in range(0, image.shape[0], step_size):
+        for x in range(0, image.shape[1], step_size):
+            window = image[y:y + window_size[1], x:x + window_size[0]]
+            if window.shape[0] != window_size[1] or window.shape[1] != window_size[0]:
+                # 添加填充，使窗口大小与window_size一致
+                pad_bottom = max(0, window_size[1] - window.shape[0])
+                pad_right = max(0, window_size[0] - window.shape[1])
+                window = cv2.copyMakeBorder(window, 0, pad_bottom, 0, pad_right, cv2.BORDER_CONSTANT, value=(0, 0, 0))
+            yield (x, y, window)
+    
+    def process_image(self, image, step_size, window_size):
+        windows = []
+        for (x, y, window) in self.sliding_window(image, step_size, window_size):
+            windows.append((x, y, window))
+        return windows
+
+    def preprocess_image(self, pdf_paths):
+        hd_images = []
+        for pdf_name in pdf_paths:
+            hd_images.append(np.array(self.convert_pdf_to_images(pdf_name, dpi=200)[0])) # get the single pic from a list 
+        
+        hd_images[0], hd_images[1] = self.resize_to_same_height(hd_images[0], hd_images[1])
+
+        for image in hd_images:
+            # cut a huge image to a group of sub-images by sliding window 
+            windows = self.process_image(image, self.step_size, self.window_size) 
+        
+            # compose the windowsed images to a batch tensor
+            window_tensors = [torch.from_numpy(window).permute(2, 0, 1).float().unsqueeze(0) / 255.0 for _, _, window in windows]
+            input_tensor_batch = torch.cat(window_tensors, dim=0)
+            
+            results = detect_objects(detection_model, input_tensor_batch)[0]        
+            all_boxes, all_scores = postprocess_results(results)
+            
+            # integraet local result of windows image to a global result  
+            global_boxes, global_scores = integrate_detections(windows, all_boxes, all_scores)
+            indices = global_nms(global_boxes, global_scores)
+            final_boxes = global_boxes[indices]
+            bbox_results.append(final_boxes)
+
+            draw_bboxes(image, final_boxes)
+            
+            result_image = Image.fromarray(image)
+            result_image.save(f'./outputs/{pdf_name}_detected.png')
+
     
     def detect_image(self, image):
         pred = self.session.run(None, {self.input_name: image})[0]  # 执行推理
@@ -123,9 +194,9 @@ class YOLOv5ONNXPipeline:
         cv2.imwrite("run/output.jpg", im0)
         return im0
         
-    def __call__(self, image):
+    def __call__(self, pdf_paths):
         # 预处理图像
-        image_deal = self.preprocess_image(image.copy())
+        image_deal = self.preprocess_image(pdf_paths)
         # 推理
         boxes, classIds, confidences = self.detect_image(image_deal)
         # 后处理
@@ -142,51 +213,6 @@ class YOLOv5ONNXPipeline:
             }
         return result
 
-class YOLOv8SegmentationPipeline:
-    def __init__(self, onnx_model_path):
-        # 初始化ONNX模型
-        self.session = onnxruntime.InferenceSession(onnx_model_path)
-        self.input_name = self.session.get_inputs()[0].name
-
-    def preprocess_image(self, image):
-        # YOLOv8的预处理步骤可能包括：
-        # 1. 将图像调整到模型期望的尺寸
-        # 2. 将PIL图像转换为NumPy数组
-        # 3. 归一化像素值
-        # 4. 增加一个批次维度
-        # 注意：这里的尺寸和归一化参数需要根据你的YOLOv8模型进行调整
-
-        # 假设模型期望的输入尺寸是640X640
-        image = image.resize((640, 640))
-        image_array = np.array(image).astype(np.float32)
-        image_array /= 255.0  # 归一化
-        image_array = np.expand_dims(image_array, axis=0)  # 增加批次维度
-        # 使用 transpose 函数来重新排列轴的顺序
-        # 这里的 (0, 3, 1, 2) 表示：保持第一个维度不变，将第二个维度（颜色通道）移动到第二位，然后是宽度和高度
-        image_array_transposed = image_array.transpose((0, 3, 1, 2))
-        return image_array_transposed
-
-    def postprocess_results(self, results):
-        # YOLOv8的后处理步骤可能包括：
-        # 1. 解析模型输出，通常包括边界框坐标、置信度和类别
-        # 2. 应用阈值来过滤低置信度的预测
-        # 3. 应用非极大值抑制（NMS）来去除重叠的边界框
-        # 注意：这里的后处理逻辑需要根据你的YOLOv8模型输出进行调整
-        # 这里只是一个示例，实际的后处理代码会更复杂
-
-        # 假设results是模型输出的直接结果，包含了分割掩码
-        # 这里我们直接返回results，实际使用时需要根据模型输出格式进行后处理
-        return results
-
-    def __call__(self, image):
-        # 预处理图像
-        image_array = self.preprocess_image(image)
-        # 推理
-        results = self.session.run(None, {self.input_name: image_array})
-        # 后处理
-        segmentation = self.postprocess_results(results)
-
-        return segmentation
 
 class OCRPipeline:
     def __init__(self,use_angle_cls=True, lang="ch",use_gpu=True):
