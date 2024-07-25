@@ -322,17 +322,25 @@ def visualize_matches_with_info(image1, image2, boxes1, boxes2, matches, match_r
 
     
     result_json = {
+        "global_info": {
+            "Image 1 boxes": len(boxes1),
+            "Image 2 boxes": len(boxes2),
+            "BBox match success": bbox_match_success,
+            "BBox match fail": bbox_match_fail,
+            "Image match success": img_match_success,
+            "Image match fail": img_match_fail,
+            "Cosine distance threshold": threshold
+        },
         "item_pairs": [
         {
             "type1": cls1,
             "type2": cls2,
             "bbox1": bbox1,
             "bbox2": bbox2,
-            "is_pair": cls1 == cls2, 
+            "is_pair": cosine < 0.3,  # for example
             "cosine_distance": cosine
-        }
-        for cosine, cls1, cls2, bbox1, bbox2 in match_results
-    ]
+        } for cosine, cls1, cls2, bbox1, bbox2 in match_results
+        ]
     }
     print(result_json)
     with open(json_path, 'w') as json_file:

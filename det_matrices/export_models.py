@@ -45,9 +45,9 @@ if __name__ == '__main__':
             verbose=True,
             opset_version=12,
             input_names=["inputs"],
-            output_names=["output"],
+            output_names=["outputs"],
             dynamic_axes={"inputs": {0: "batch", 2: "height", 3: "width"},
-                        "output": {0: "batch", 1: "anchors"}}
+                        "outputs": {0: "batch", 1: "anchors"}}
         )
 
         # model check
@@ -69,11 +69,11 @@ if __name__ == '__main__':
             onnx_path,
             verbose=True,
             opset_version=12,
-            input_names=["input"],
+            input_names=["inputs"],
             output_names=["feature", "logits"],
-            dynamic_axes={"input": {0: "batch_size", 2: "height", 3: "width"}, 
-                          "feature": {0: "batch_size"}, 
-                          "logits": {0: "batch_size"}}
+            dynamic_axes={"inputs": {0: "batch_size", 2: "height", 3: "width"}, 
+                            "feature": {0: "batch_size"}, 
+                            "logits": {0: "batch_size"}}
         )
 
         # model check
