@@ -1,54 +1,8 @@
 import torch
 import torch.nn as nn
 import torchvision.models as models
-from torchvision.models import EfficientNet_V2_S_Weights, ConvNeXt_Tiny_Weights, MobileNet_V2_Weights
+from torchvision.models import ConvNeXt_Tiny_Weights, MobileNet_V2_Weights
 
-class HybridEfficientNetV2S(nn.Module):
-    def __init__(self, num_classes=10, dropout_p=0.3, init=True, update=False, weight_path=None, cuda=True):
-        super(HybridEfficientNetV2S, self).__init__()
-        
-        self.init = init
-        self.update = update
-        self.weight_path = weight_path
-        self.cuda = cuda
-        
-        # Load the pre-trained EfficientNet_V2_S
-        self.model = models.efficientnet_v2_s(weights=EfficientNet_V2_S_Weights.IMAGENET1K_V1)
-        
-        # Modify the first convolution layer to accept 1-channel input
-        self.model.features[0][0] = nn.Conv2d(1, 24, kernel_size=3, stride=1, padding=1, bias=False)
-        
-        self.pool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc_feature = nn.Linear(1280, 512)
-        self.fc_classification = nn.Linear(1280, num_classes)
-        self.dropout = nn.Dropout(p=dropout_p)
-        
-        if not self.init and self.weight_path:
-            self.load_weight()
-            
-        if self.update:
-            self.freeze_layers()
-        
-    def forward(self, x):
-        x = self.model.features(x)
-        x = self.pool(x).view(x.size(0), -1)
-        feature = self.dropout(self.fc_feature(x))
-        logits = self.dropout(self.fc_classification(x))
-        
-        return feature, logits
-    
-    def load_weight(self):
-        if self.cuda:
-            self.load_state_dict(torch.load(self.weight_path + "_train_best.pth"))
-        else:
-            self.load_state_dict(torch.load(self.weight_path + "_train_best.pth", map_location=torch.device('cpu')))
-        print(f'load weight from {self.weight_path}_train_best.pth')
-    
-    def freeze_layers(self):
-        for name, param in self.named_parameters():
-            if "fc" not in name:
-                param.requires_grad = False
-                
 class HybridConvNeXtTiny(nn.Module):
     def __init__(self, num_classes=10, dropout_p=0.3, init=True, update=False, weight_path=None, cuda=True):
         super(HybridConvNeXtTiny, self).__init__()
